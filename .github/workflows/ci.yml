@@ -1,0 +1,52 @@
+name: CI Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Lint with Black
+      run: |
+        black --check --diff . --exclude '/(\.venv|__pycache__|\.git|\.github|data|logs|models/artifacts|reports)/'
+    
+    - name: Lint with Ruff
+      run: |
+        ruff check . --exclude '.venv|__pycache__|.git|.github|data|logs|models/artifacts|reports'
+    
+    - name: Verify test data exists
+      run: |
+        if [ ! -f "data/raw/ticks_BTCUSD_20251130_235611.ndjson" ]; then
+          echo "Error: Test data file not found"
+          exit 1
+        fi
+        echo "Test data file found"
+    
+    - name: Replay test
+      run: |
+        python scripts/replay.py \
+          --raw data/raw/ticks_BTCUSD_20251130_235611.ndjson \
+          --out data/processed/features_replay_ci.parquet \
+          --windows 30 60 300
+      env:
+        PYTHONPATH: ${{ github.workspace }}
+
