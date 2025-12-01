@@ -39,10 +39,13 @@ try:
         update_consumer_lag,
         set_consumer_connected,
     )
+
     _HAS_KAFKA_METRICS = True
 except ImportError:
     _HAS_KAFKA_METRICS = False
-    logger.warning("kafka_metrics module not available - consumer lag tracking disabled")
+    logger.warning(
+        "kafka_metrics module not available - consumer lag tracking disabled"
+    )
 
 
 class PredictionConsumer:
@@ -84,7 +87,7 @@ class PredictionConsumer:
         # Rate limiting: track request timestamps (keep last minute)
         # Use a deque without maxlen so we can manually prune old entries
         self.request_timestamps = deque()
-        
+
         # Consumer group for metrics
         self.consumer_group = "prediction-consumer"
 
@@ -129,11 +132,11 @@ class PredictionConsumer:
                 )
                 logger.info(f"✓ Connected to Kafka at {self.bootstrap_servers}")
                 logger.info(f"  Consuming from topic: {self.topic}")
-                
+
                 # Set consumer connected status
                 if _HAS_KAFKA_METRICS:
                     set_consumer_connected(self.consumer_group, self.topic, True)
-                
+
                 return
 
             except (KafkaError, Exception) as e:
@@ -290,9 +293,13 @@ class PredictionConsumer:
                                 committed = self.consumer.committed(topic_partition)
                                 if committed is not None:
                                     # Get end offset for this partition
-                                    end_offsets = self.consumer.end_offsets([topic_partition])
-                                    end_offset = end_offsets.get(topic_partition, committed)
-                                    
+                                    end_offsets = self.consumer.end_offsets(
+                                        [topic_partition]
+                                    )
+                                    end_offset = end_offsets.get(
+                                        topic_partition, committed
+                                    )
+
                                     # Update metrics
                                     update_consumer_lag(
                                         consumer_group=self.consumer_group,
@@ -302,8 +309,10 @@ class PredictionConsumer:
                                         end_offset=end_offset,
                                     )
                             except Exception as e:
-                                logger.debug(f"Failed to update consumer lag metrics: {e}")
-                        
+                                logger.debug(
+                                    f"Failed to update consumer lag metrics: {e}"
+                                )
+
                         for message in messages:
                             if not self.running:
                                 break
@@ -370,7 +379,7 @@ class PredictionConsumer:
                 # Set consumer disconnected status
                 if _HAS_KAFKA_METRICS:
                     set_consumer_connected(self.consumer_group, self.topic, False)
-                
+
                 self.consumer.close()
             except Exception as e:
                 logger.warning(f"Error closing consumer: {e}")

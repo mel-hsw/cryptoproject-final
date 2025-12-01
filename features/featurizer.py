@@ -25,16 +25,20 @@ logger = logging.getLogger(__name__)
 # Import Kafka metrics for consumer lag tracking
 try:
     import sys
+
     sys.path.insert(0, str(Path(__file__).parent.parent))
     from scripts.kafka_metrics import (
         start_metrics_server,
         update_consumer_lag,
         set_consumer_connected,
     )
+
     _HAS_KAFKA_METRICS = True
 except ImportError:
     _HAS_KAFKA_METRICS = False
-    logger.warning("kafka_metrics module not available - consumer lag tracking disabled")
+    logger.warning(
+        "kafka_metrics module not available - consumer lag tracking disabled"
+    )
 
 
 # Lazy import for Kafka (only needed for FeaturePipeline, not FeatureComputer)
@@ -604,7 +608,7 @@ class FeaturePipeline:
         self.reconnect_attempts = 0
         self.max_reconnect_attempts = 10
         self.reconnect_base_delay = 2  # Start with 2 seconds
-        
+
         # Message counters for cleanup reporting
         self.message_count = 0
         self.processed_count = 0
@@ -661,7 +665,7 @@ class FeaturePipeline:
         # Retry logic for consumer
         for attempt in range(max_retries):
             try:
-                if hasattr(self, 'consumer') and self.consumer:
+                if hasattr(self, "consumer") and self.consumer:
                     try:
                         self.consumer.close()
                     except Exception:
@@ -675,12 +679,14 @@ class FeaturePipeline:
                     group_id=self.consumer_group,
                     enable_auto_commit=True,
                 )
-                logger.info(f"✓ Connected to Kafka consumer at {self.bootstrap_servers}")
-                
+                logger.info(
+                    f"✓ Connected to Kafka consumer at {self.bootstrap_servers}"
+                )
+
                 # Set consumer connected status
                 if _HAS_KAFKA_METRICS:
                     set_consumer_connected(self.consumer_group, self.input_topic, True)
-                
+
                 break
 
             except (KafkaError, KafkaTimeoutError, Exception) as e:
@@ -700,7 +706,7 @@ class FeaturePipeline:
         # Retry logic for producer
         for attempt in range(max_retries):
             try:
-                if hasattr(self, 'producer') and self.producer:
+                if hasattr(self, "producer") and self.producer:
                     try:
                         self.producer.close(timeout=5)
                     except Exception:
@@ -714,7 +720,9 @@ class FeaturePipeline:
                     max_in_flight_requests_per_connection=5,
                     request_timeout_ms=30000,
                 )
-                logger.info(f"✓ Connected to Kafka producer at {self.bootstrap_servers}")
+                logger.info(
+                    f"✓ Connected to Kafka producer at {self.bootstrap_servers}"
+                )
                 self.reconnect_attempts = 0  # Reset on success
                 return
 
@@ -1112,9 +1120,13 @@ class FeaturePipeline:
                                 committed = self.consumer.committed(topic_partition)
                                 if committed is not None:
                                     # Get end offset for this partition
-                                    end_offsets = self.consumer.end_offsets([topic_partition])
-                                    end_offset = end_offsets.get(topic_partition, committed)
-                                    
+                                    end_offsets = self.consumer.end_offsets(
+                                        [topic_partition]
+                                    )
+                                    end_offset = end_offsets.get(
+                                        topic_partition, committed
+                                    )
+
                                     # Update metrics
                                     update_consumer_lag(
                                         consumer_group=self.consumer_group,
@@ -1124,8 +1136,10 @@ class FeaturePipeline:
                                         end_offset=end_offset,
                                     )
                             except Exception as e:
-                                logger.debug(f"Failed to update consumer lag metrics: {e}")
-                        
+                                logger.debug(
+                                    f"Failed to update consumer lag metrics: {e}"
+                                )
+
                         for message in messages:
                             if not self.running or self.shutdown_event.is_set():
                                 break
@@ -1155,6 +1169,7 @@ class FeaturePipeline:
                     # Attempt reconnection on Kafka errors
                     try:
                         from kafka.errors import KafkaError, KafkaTimeoutError
+
                         is_kafka_error = isinstance(e, (KafkaError, KafkaTimeoutError))
                     except ImportError:
                         # If we can't import, check error message for Kafka-related strings
@@ -1165,7 +1180,9 @@ class FeaturePipeline:
                         )
 
                     if is_kafka_error and self.running:
-                        logger.warning("Kafka connection error, attempting reconnection...")
+                        logger.warning(
+                            "Kafka connection error, attempting reconnection..."
+                        )
                         if not self._reconnect_kafka():
                             logger.error("Failed to reconnect, waiting before retry...")
                             time.sleep(5)
@@ -1209,7 +1226,7 @@ class FeaturePipeline:
                 # Set consumer disconnected status
                 if _HAS_KAFKA_METRICS:
                     set_consumer_connected(self.consumer_group, self.input_topic, False)
-                
+
                 logger.info("Closing Kafka consumer...")
                 self.consumer.close(timeout=10)
                 logger.info("✓ Kafka consumer closed")
@@ -1217,7 +1234,7 @@ class FeaturePipeline:
                 logger.warning(f"Error closing Kafka consumer: {e}")
 
         # Flush and close Kafka producer
-        if hasattr(self, 'producer') and self.producer:
+        if hasattr(self, "producer") and self.producer:
             try:
                 logger.info("Flushing Kafka producer...")
                 self.producer.flush(timeout=10)

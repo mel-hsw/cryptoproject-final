@@ -5,7 +5,6 @@ Exposes consumer lag and other Kafka-related metrics.
 
 import logging
 from prometheus_client import Gauge, start_http_server
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +34,7 @@ kafka_consumer_connected = Gauge(
     ["consumer_group", "topic"],
 )
 
+
 # Start metrics server (call this from consumer scripts)
 def start_metrics_server(port: int = 8001):
     """Start Prometheus metrics HTTP server."""
@@ -55,19 +55,19 @@ def update_consumer_lag(
 ):
     """Update consumer lag metrics."""
     lag = max(0, end_offset - consumer_offset)
-    
+
     kafka_consumer_lag.labels(
         consumer_group=consumer_group,
         topic=topic,
         partition=partition,
     ).set(lag)
-    
+
     kafka_consumer_offset.labels(
         consumer_group=consumer_group,
         topic=topic,
         partition=partition,
     ).set(consumer_offset)
-    
+
     kafka_topic_end_offset.labels(
         topic=topic,
         partition=partition,
@@ -80,4 +80,3 @@ def set_consumer_connected(consumer_group: str, topic: str, connected: bool):
         consumer_group=consumer_group,
         topic=topic,
     ).set(1 if connected else 0)
-
