@@ -1,0 +1,43 @@
+2025-11-30 23:56:46,368 - __main__ - INFO - Starting Coinbase WebSocket Ingestor
+2025-11-30 23:56:46,368 - __main__ - INFO - Trading pairs: ['BTC-USD']
+2025-11-30 23:56:46,368 - __main__ - INFO - Kafka topic: ticks.raw
+2025-11-30 23:56:46,368 - __main__ - INFO - ✓ Connected to Kafka at localhost:9092
+2025-11-30 23:56:46,368 - __main__ - INFO - Writing raw data to data/raw/ticks_BTCUSD_20251130_235646.ndjson
+2025-11-30 23:56:46,368 - __main__ - INFO - Starting ingestion (press Ctrl+C to stop)
+2025-11-30 23:56:46,371 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-producer-1, node_id=bootstrap-0 host=localhost:9092 <connecting> [IPv6 ('::1', 9092, 0, 0)]>: connecting to localhost:9092 [('::1', 9092, 0, 0) IPv6]
+2025-11-30 23:56:46,372 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-producer-1, node_id=bootstrap-0 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Connection complete.
+2025-11-30 23:56:46,515 - websocket - INFO - Websocket connected
+2025-11-30 23:56:46,515 - __main__ - INFO - WebSocket connected to wss://advanced-trade-ws.coinbase.com
+2025-11-30 23:56:46,515 - __main__ - INFO - Sending subscription: {'type': 'subscribe', 'product_ids': ['BTC-USD'], 'channel': 'ticker'}
+2025-11-30 23:56:46,515 - __main__ - INFO - Subscribed to ticker channel for ['BTC-USD']
+2025-11-30 23:56:46,515 - __main__ - INFO - Subscribed to heartbeats
+2025-11-30 23:56:46,542 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-producer-1, node_id=1 host=localhost:9092 <connecting> [IPv6 ('::1', 9092, 0, 0)]>: connecting to localhost:9092 [('::1', 9092, 0, 0) IPv6]
+2025-11-30 23:56:46,542 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-producer-1, node_id=1 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Connection complete.
+2025-11-30 23:56:46,543 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-producer-1, node_id=bootstrap-0 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Closing connection. 
+2025-11-30 23:56:48,626 - __main__ - INFO - Processed 10 messages (4.43 msg/s)
+2025-11-30 23:56:50,159 - __main__ - INFO - Processed 20 messages (5.28 msg/s)
+2025-11-30 23:56:52,485 - __main__ - INFO - Processed 30 messages (4.90 msg/s)
+2025-11-30 23:56:53,907 - __main__ - INFO - Processed 40 messages (5.31 msg/s)
+2025-11-30 23:56:55,630 - __main__ - INFO - Processed 50 messages (5.40 msg/s)
+2025-11-30 23:56:57,409 - __main__ - INFO - Processed 60 messages (5.43 msg/s)
+2025-11-30 23:56:59,755 - __main__ - INFO - Processed 70 messages (5.23 msg/s)
+2025-11-30 23:57:01,880 - __main__ - INFO - Processed 80 messages (5.16 msg/s)
+2025-11-30 23:57:03,879 - __main__ - INFO - Processed 90 messages (5.14 msg/s)
+2025-11-30 23:57:06,410 - __main__ - INFO - Processed 100 messages (4.99 msg/s)
+2025-11-30 23:57:07,909 - __main__ - INFO - Processed 110 messages (5.11 msg/s)
+2025-11-30 23:57:09,870 - __main__ - INFO - Processed 120 messages (5.11 msg/s)
+2025-11-30 23:57:11,133 - __main__ - INFO - Processed 130 messages (5.25 msg/s)
+2025-11-30 23:57:13,408 - __main__ - INFO - Processed 140 messages (5.18 msg/s)
+2025-11-30 23:57:15,376 - __main__ - INFO - Processed 150 messages (5.17 msg/s)
+2025-11-30 23:57:17,534 - __main__ - INFO - Received signal 15, initiating graceful shutdown...
+2025-11-30 23:57:17,560 - __main__ - INFO - Received signal 15, initiating graceful shutdown...
+2025-11-30 23:57:27,410 - __main__ - INFO - WebSocket closed: None - None
+2025-11-30 23:57:27,411 - __main__ - INFO - Total messages processed: 159
+2025-11-30 23:57:27,411 - __main__ - INFO - Starting graceful cleanup. Total messages processed: 159
+2025-11-30 23:57:27,411 - __main__ - INFO - Flushing Kafka producer...
+2025-11-30 23:57:27,411 - __main__ - INFO - Closing Kafka producer...
+2025-11-30 23:57:27,411 - kafka.producer.kafka - INFO - <KafkaProducer client_id=kafka-python-producer-1 transactional_id=None>: Closing the Kafka producer with 10 secs timeout.
+2025-11-30 23:57:27,411 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-producer-1, node_id=1 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Closing connection. 
+2025-11-30 23:57:27,411 - __main__ - INFO - ✓ Kafka producer closed
+2025-11-30 23:57:27,411 - __main__ - INFO - ✓ File handle closed
+2025-11-30 23:57:27,411 - __main__ - INFO - Cleanup complete

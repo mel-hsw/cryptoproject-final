@@ -1,0 +1,7 @@
+{
+  "optimal_threshold": 0.7057130340503562,
+  "threshold_10pct": 0.8049812997453345,
+  "threshold_used": 0.7057130340503562,
+  "validation_f1_at_optimal": 0.9545983701979044,
+  "spike_rate_target": 0.1
+}

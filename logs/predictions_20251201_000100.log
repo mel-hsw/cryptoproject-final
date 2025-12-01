@@ -1,0 +1,59 @@
+2025-12-01 00:01:10,538 - __main__ - WARNING - kafka_metrics module not available - consumer lag tracking disabled
+2025-12-01 00:01:10,540 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=bootstrap-0 host=localhost:9092 <connecting> [IPv6 ('::1', 9092, 0, 0)]>: connecting to localhost:9092 [('::1', 9092, 0, 0) IPv6]
+2025-12-01 00:01:10,545 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=bootstrap-0 host=localhost:9092 <checking_api_versions_recv> [IPv6 ('::1', 9092, 0, 0)]>: Broker version identified as 2.6
+2025-12-01 00:01:10,545 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=bootstrap-0 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Connection complete.
+2025-12-01 00:01:10,545 - kafka.consumer.subscription_state - INFO - Updating subscribed topics to: ('ticks.features',)
+2025-12-01 00:01:10,545 - __main__ - INFO - ✓ Connected to Kafka at localhost:9092
+2025-12-01 00:01:10,545 - __main__ - INFO -   Consuming from topic: ticks.features
+2025-12-01 00:01:10,545 - __main__ - INFO - Starting Prediction Consumer
+2025-12-01 00:01:10,545 - __main__ - INFO -   API endpoint: http://localhost:8000/predict
+2025-12-01 00:01:10,545 - __main__ - INFO -   Kafka topic: ticks.features
+2025-12-01 00:01:10,545 - __main__ - INFO -   Rate limit: 120 requests/minute (2.0 requests/second)
+2025-12-01 00:01:10,545 - __main__ - INFO -   Recommended frequency: 1-2 predictions/second (60-120/minute)
+2025-12-01 00:01:10,545 - __main__ - INFO -   Consuming features and calling /predict automatically...
+2025-12-01 00:01:10,545 - __main__ - INFO - 
+2025-12-01 00:01:10,547 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=localhost:9092 <connecting> [IPv6 ('::1', 9092, 0, 0)]>: connecting to localhost:9092 [('::1', 9092, 0, 0) IPv6]
+2025-12-01 00:01:10,651 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Connection complete.
+2025-12-01 00:01:10,651 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=bootstrap-0 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Closing connection. 
+2025-12-01 00:01:10,758 - kafka.cluster - INFO - Coordinator for group/prediction-consumer is BrokerMetadata(nodeId='coordinator-1', host='localhost', port=9092, rack=None)
+2025-12-01 00:01:10,758 - kafka.coordinator - INFO - Discovered coordinator coordinator-1 for group prediction-consumer
+2025-12-01 00:01:10,758 - kafka.coordinator.heartbeat - INFO - Starting new heartbeat thread
+2025-12-01 00:01:10,758 - kafka.coordinator.consumer - INFO - Revoking previously assigned partitions set() for group prediction-consumer
+2025-12-01 00:01:10,758 - kafka.coordinator - INFO - Failed to join group prediction-consumer: NodeNotReadyError: coordinator-1
+2025-12-01 00:01:10,758 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=coordinator-1 host=localhost:9092 <connecting> [IPv6 ('::1', 9092, 0, 0)]>: connecting to localhost:9092 [('::1', 9092, 0, 0) IPv6]
+2025-12-01 00:01:10,863 - kafka.coordinator - INFO - Failed to join group prediction-consumer: NodeNotReadyError: coordinator-1
+2025-12-01 00:01:10,863 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=coordinator-1 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Connection complete.
+2025-12-01 00:01:10,969 - kafka.coordinator - INFO - (Re-)joining group prediction-consumer
+2025-12-01 00:01:10,971 - kafka.coordinator - INFO - Received member id kafka-python-2.3.0-10a901b4-a32a-4c24-abc4-3cd06d084419 for group prediction-consumer; will retry join-group
+2025-12-01 00:01:10,971 - kafka.coordinator - INFO - Failed to join group prediction-consumer: [Error 79] MemberIdRequiredError
+2025-12-01 00:01:10,972 - kafka.coordinator - INFO - (Re-)joining group prediction-consumer
+2025-12-01 00:01:13,975 - kafka.coordinator - INFO - Successfully joined group prediction-consumer <Generation 18 (member_id: kafka-python-2.3.0-10a901b4-a32a-4c24-abc4-3cd06d084419, protocol: range)>
+2025-12-01 00:01:13,975 - kafka.coordinator - INFO - Elected group leader -- performing partition assignments using range
+2025-12-01 00:01:13,978 - kafka.consumer.subscription_state - INFO - Updated partition assignment: [TopicPartition(topic='ticks.features', partition=0), TopicPartition(topic='ticks.features', partition=1), TopicPartition(topic='ticks.features', partition=2)]
+2025-12-01 00:01:13,979 - kafka.coordinator.consumer - INFO - Setting newly assigned partitions {TopicPartition(topic='ticks.features', partition=1), TopicPartition(topic='ticks.features', partition=2), TopicPartition(topic='ticks.features', partition=0)} for group prediction-consumer
+2025-12-01 00:01:15,905 - __main__ - INFO - Processed 100 predictions (18.63 pred/s, 0 errors)
+2025-12-01 00:02:15,533 - __main__ - INFO - Processed 200 predictions (3.08 pred/s, 0 errors)
+2025-12-01 00:03:15,276 - __main__ - INFO - Processed 300 predictions (2.41 pred/s, 0 errors)
+2025-12-01 00:04:15,492 - __main__ - INFO - Processed 400 predictions (2.16 pred/s, 0 errors)
+2025-12-01 00:05:15,191 - __main__ - INFO - Processed 500 predictions (2.04 pred/s, 0 errors)
+2025-12-01 00:05:17,188 - __main__ - INFO - Processed 600 predictions (2.43 pred/s, 0 errors)
+2025-12-01 00:06:17,670 - __main__ - INFO - Processed 700 predictions (2.28 pred/s, 0 errors)
+2025-12-01 00:07:18,147 - __main__ - INFO - Processed 800 predictions (2.18 pred/s, 0 errors)
+2025-12-01 00:08:17,838 - __main__ - INFO - Processed 900 predictions (2.11 pred/s, 0 errors)
+2025-12-01 00:09:17,167 - __main__ - INFO - Processed 1000 predictions (2.05 pred/s, 0 errors)
+2025-12-01 00:10:16,440 - __main__ - INFO - Processed 1100 predictions (2.02 pred/s, 0 errors)
+2025-12-01 00:10:19,701 - __main__ - INFO - Processed 1200 predictions (2.19 pred/s, 0 errors)
+2025-12-01 00:11:19,365 - __main__ - INFO - Processed 1300 predictions (2.14 pred/s, 0 errors)
+2025-12-01 00:12:18,718 - __main__ - INFO - Processed 1400 predictions (2.10 pred/s, 0 errors)
+2025-12-01 00:13:18,344 - __main__ - INFO - Processed 1500 predictions (2.06 pred/s, 0 errors)
+2025-12-01 00:14:17,568 - __main__ - INFO - Processed 1600 predictions (2.03 pred/s, 0 errors)
+2025-12-01 00:15:16,964 - __main__ - INFO - Processed 1700 predictions (2.01 pred/s, 0 errors)
+2025-12-01 00:15:20,154 - __main__ - INFO - Processed 1800 predictions (2.12 pred/s, 0 errors)
+2025-12-01 00:16:19,886 - __main__ - INFO - Processed 1900 predictions (2.09 pred/s, 0 errors)
+2025-12-01 00:17:19,225 - __main__ - INFO - Processed 2000 predictions (2.06 pred/s, 0 errors)
+2025-12-01 00:18:18,980 - __main__ - INFO - Processed 2100 predictions (2.04 pred/s, 0 errors)
+2025-12-01 00:19:18,077 - __main__ - INFO - Processed 2200 predictions (2.02 pred/s, 0 errors)
+2025-12-01 00:20:17,472 - __main__ - INFO - Processed 2300 predictions (2.01 pred/s, 0 errors)
+2025-12-01 00:20:21,209 - __main__ - INFO - Processed 2400 predictions (2.09 pred/s, 0 errors)
+2025-12-01 00:21:20,628 - __main__ - INFO - Processed 2500 predictions (2.07 pred/s, 0 errors)
+2025-12-01 00:22:19,786 - __main__ - INFO - Processed 2600 predictions (2.05 pred/s, 0 errors)

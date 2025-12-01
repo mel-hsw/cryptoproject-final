@@ -1,0 +1,60 @@
+# Core dependencies (from Milestone 1 & 2)
+kafka-python>=2.0.2  # Upgraded to fix six.moves import issue
+six>=1.15.0  # Required by kafka-python
+pandas==2.1.4
+numpy>=1.26.2
+pyarrow==14.0.1
+
+# ML and modeling (Milestone 3)
+scikit-learn==1.3.2
+xgboost==2.0.3  # Optional but recommended
+
+# MLflow for experiment tracking
+mlflow==2.9.2
+sqlalchemy==2.0.23  # Required by MLflow
+
+# Evidently for drift monitoring
+# Evidently 0.4.x has save_html/save_json methods (needed for reports)
+# Note: This version requires pydantic<2, but we use pydantic v2 for FastAPI
+# The script will work as long as pydantic v2 is installed (backward compatible)
+evidently>=0.4.40,<0.5.0
+pydantic>=2.0  # FastAPI requires pydantic>=2.0
+
+# Visualization
+matplotlib==3.8.2
+seaborn==0.13.0
+
+# Jupyter for EDA
+jupyter==1.0.0
+ipykernel==6.27.1
+
+# WebSocket and async
+websocket-client==1.6.4
+
+# Environment management
+python-dotenv==1.0.0
+
+# PDF generation for reports
+reportlab==4.0.7  # Alternative if needed
+
+# Testing (optional but recommended)
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-asyncio>=0.21.0  # Required for async test support
+httpx==0.25.2  # For integration tests
+
+# Code formatting and linting (CI/CD)
+black>=24.8.0
+ruff==0.1.9
+
+# FastAPI and API dependencies (Week 4)
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+prometheus-client==0.19.0
+slowapi>=0.1.8  # Rate limiting
+python-json-logger>=2.0.0  # Structured logging
+requests>=2.31.0  # HTTP client for prediction consumer
+
+# System monitoring
+psutil>=5.9.0  # CPU/memory metrics for hardware monitoring
+

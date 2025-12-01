@@ -1,0 +1,25 @@
+2025-11-30 23:59:45,130 - scripts.kafka_metrics - INFO - Prometheus metrics server started on port 8001
+2025-11-30 23:59:45,151 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=bootstrap-0 host=localhost:9092 <connecting> [IPv6 ('::1', 9092, 0, 0)]>: connecting to localhost:9092 [('::1', 9092, 0, 0) IPv6]
+2025-11-30 23:59:45,155 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=bootstrap-0 host=localhost:9092 <checking_api_versions_recv> [IPv6 ('::1', 9092, 0, 0)]>: Broker version identified as 2.6
+2025-11-30 23:59:45,155 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=bootstrap-0 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Connection complete.
+2025-11-30 23:59:45,155 - kafka.consumer.subscription_state - INFO - Updating subscribed topics to: ('ticks.raw',)
+2025-11-30 23:59:45,155 - __main__ - INFO - ✓ Connected to Kafka consumer at localhost:9092
+2025-11-30 23:59:45,155 - __main__ - WARNING - Kafka producer connection failed (attempt 1/5): 'FeaturePipeline' object has no attribute 'producer'
+2025-11-30 23:59:45,155 - __main__ - INFO - Retrying in 2 seconds...
+2025-11-30 23:59:47,160 - __main__ - WARNING - Kafka producer connection failed (attempt 2/5): 'FeaturePipeline' object has no attribute 'producer'
+2025-11-30 23:59:47,161 - __main__ - INFO - Retrying in 4 seconds...
+2025-11-30 23:59:51,162 - __main__ - WARNING - Kafka producer connection failed (attempt 3/5): 'FeaturePipeline' object has no attribute 'producer'
+2025-11-30 23:59:51,163 - __main__ - INFO - Retrying in 8 seconds...
+2025-11-30 23:59:59,166 - __main__ - WARNING - Kafka producer connection failed (attempt 4/5): 'FeaturePipeline' object has no attribute 'producer'
+2025-11-30 23:59:59,167 - __main__ - INFO - Retrying in 16 seconds...
+2025-12-01 00:00:15,173 - __main__ - ERROR - Failed to connect Kafka producer after 5 attempts: 'FeaturePipeline' object has no attribute 'producer'
+Traceback (most recent call last):
+  File "/Users/mel/Downloads/Crypto-Project-FOAI_edited-mel/features/featurizer.py", line 1346, in <module>
+    main()
+  File "/Users/mel/Downloads/Crypto-Project-FOAI_edited-mel/features/featurizer.py", line 1331, in main
+    pipeline = FeaturePipeline(
+  File "/Users/mel/Downloads/Crypto-Project-FOAI_edited-mel/features/featurizer.py", line 628, in __init__
+    self._init_kafka_connections()
+  File "/Users/mel/Downloads/Crypto-Project-FOAI_edited-mel/features/featurizer.py", line 703, in _init_kafka_connections
+    if self.producer:
+AttributeError: 'FeaturePipeline' object has no attribute 'producer'

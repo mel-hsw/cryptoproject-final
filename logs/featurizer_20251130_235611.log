@@ -1,0 +1,4 @@
+  File "/Users/mel/Downloads/Crypto-Project-FOAI_edited-mel/features/featurizer.py", line 1134
+    features = self.process_message(message)
+    ^
+SyntaxError: invalid syntax

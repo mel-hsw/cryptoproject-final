@@ -1,0 +1,143 @@
+2025-12-01 00:01:05,855 - scripts.kafka_metrics - INFO - Prometheus metrics server started on port 8001
+2025-12-01 00:01:05,877 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=bootstrap-0 host=localhost:9092 <connecting> [IPv6 ('::1', 9092, 0, 0)]>: connecting to localhost:9092 [('::1', 9092, 0, 0) IPv6]
+2025-12-01 00:01:05,883 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=bootstrap-0 host=localhost:9092 <checking_api_versions_recv> [IPv6 ('::1', 9092, 0, 0)]>: Broker version identified as 2.6
+2025-12-01 00:01:05,883 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=bootstrap-0 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Connection complete.
+2025-12-01 00:01:05,884 - kafka.consumer.subscription_state - INFO - Updating subscribed topics to: ('ticks.raw',)
+2025-12-01 00:01:05,884 - __main__ - INFO - ✓ Connected to Kafka consumer at localhost:9092
+2025-12-01 00:01:05,884 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-producer-1, node_id=bootstrap-0 host=localhost:9092 <connecting> [IPv6 ('::1', 9092, 0, 0)]>: connecting to localhost:9092 [('::1', 9092, 0, 0) IPv6]
+2025-12-01 00:01:05,888 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-producer-1, node_id=bootstrap-0 host=localhost:9092 <checking_api_versions_recv> [IPv6 ('::1', 9092, 0, 0)]>: Broker version identified as 2.6
+2025-12-01 00:01:05,888 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-producer-1, node_id=bootstrap-0 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Connection complete.
+2025-12-01 00:01:05,888 - __main__ - INFO - ✓ Connected to Kafka producer at localhost:9092
+2025-12-01 00:01:05,888 - __main__ - INFO - FeatureComputer initialized with windows: [30, 60, 300]s
+2025-12-01 00:01:05,889 - __main__ - INFO - FeaturePipeline initialized
+2025-12-01 00:01:05,889 - __main__ - INFO -   Input topic: ticks.raw
+2025-12-01 00:01:05,889 - __main__ - INFO -   Output topic: ticks.features
+2025-12-01 00:01:05,889 - __main__ - INFO -   Output file: data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:01:05,889 - __main__ - INFO -   Add labels: True
+2025-12-01 00:01:05,889 - __main__ - INFO -   Label threshold: 90th percentile
+2025-12-01 00:01:05,889 - __main__ - INFO - Starting feature pipeline...
+2025-12-01 00:01:05,891 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=localhost:9092 <connecting> [IPv6 ('::1', 9092, 0, 0)]>: connecting to localhost:9092 [('::1', 9092, 0, 0) IPv6]
+2025-12-01 00:01:05,991 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Connection complete.
+2025-12-01 00:01:05,991 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=bootstrap-0 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Closing connection. 
+2025-12-01 00:01:06,106 - kafka.cluster - INFO - Coordinator for group/feature-pipeline is BrokerMetadata(nodeId='coordinator-1', host='localhost', port=9092, rack=None)
+2025-12-01 00:01:06,107 - kafka.coordinator - INFO - Discovered coordinator coordinator-1 for group feature-pipeline
+2025-12-01 00:01:06,107 - kafka.coordinator.heartbeat - INFO - Starting new heartbeat thread
+2025-12-01 00:01:06,107 - kafka.coordinator.consumer - INFO - Revoking previously assigned partitions set() for group feature-pipeline
+2025-12-01 00:01:06,107 - kafka.coordinator - INFO - Failed to join group feature-pipeline: NodeNotReadyError: coordinator-1
+2025-12-01 00:01:06,108 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=coordinator-1 host=localhost:9092 <connecting> [IPv6 ('::1', 9092, 0, 0)]>: connecting to localhost:9092 [('::1', 9092, 0, 0) IPv6]
+2025-12-01 00:01:06,213 - kafka.coordinator - INFO - Failed to join group feature-pipeline: NodeNotReadyError: coordinator-1
+2025-12-01 00:01:06,214 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=coordinator-1 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Connection complete.
+2025-12-01 00:01:06,315 - kafka.coordinator - INFO - (Re-)joining group feature-pipeline
+2025-12-01 00:01:06,323 - kafka.coordinator - INFO - Received member id kafka-python-2.3.0-b49aa98b-1bd2-44f0-8dd9-a20cbc3dd3fa for group feature-pipeline; will retry join-group
+2025-12-01 00:01:06,323 - kafka.coordinator - INFO - Failed to join group feature-pipeline: [Error 79] MemberIdRequiredError
+2025-12-01 00:01:06,324 - kafka.coordinator - INFO - (Re-)joining group feature-pipeline
+2025-12-01 00:01:09,337 - kafka.coordinator - INFO - Successfully joined group feature-pipeline <Generation 19 (member_id: kafka-python-2.3.0-b49aa98b-1bd2-44f0-8dd9-a20cbc3dd3fa, protocol: range)>
+2025-12-01 00:01:09,337 - kafka.coordinator - INFO - Elected group leader -- performing partition assignments using range
+2025-12-01 00:01:09,346 - kafka.consumer.subscription_state - INFO - Updated partition assignment: [TopicPartition(topic='ticks.raw', partition=0), TopicPartition(topic='ticks.raw', partition=1), TopicPartition(topic='ticks.raw', partition=2)]
+2025-12-01 00:01:09,347 - kafka.coordinator.consumer - INFO - Setting newly assigned partitions {TopicPartition(topic='ticks.raw', partition=0), TopicPartition(topic='ticks.raw', partition=1), TopicPartition(topic='ticks.raw', partition=2)} for group feature-pipeline
+2025-12-01 00:01:09,451 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-producer-1, node_id=1 host=localhost:9092 <connecting> [IPv6 ('::1', 9092, 0, 0)]>: connecting to localhost:9092 [('::1', 9092, 0, 0) IPv6]
+2025-12-01 00:01:09,451 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-producer-1, node_id=1 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Connection complete.
+2025-12-01 00:01:09,451 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-producer-1, node_id=bootstrap-0 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Closing connection. 
+2025-12-01 00:01:09,461 - __main__ - WARNING - Large gap detected: 16.71s between ticks
+2025-12-01 00:01:10,202 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:01:10,202 - __main__ - INFO - Processed 100 messages (total seen: 100, skipped: 0)
+2025-12-01 00:01:11,573 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:01:11,573 - __main__ - INFO - Processed 200 messages (total seen: 200, skipped: 0)
+2025-12-01 00:01:12,482 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:01:12,482 - __main__ - INFO - Processed 300 messages (total seen: 300, skipped: 0)
+2025-12-01 00:01:13,688 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:01:13,688 - __main__ - INFO - Processed 400 messages (total seen: 400, skipped: 0)
+2025-12-01 00:01:16,222 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:01:16,222 - __main__ - INFO - Processed 500 messages (total seen: 500, skipped: 0)
+2025-12-01 00:01:20,076 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:01:20,076 - __main__ - INFO - Processed 600 messages (total seen: 600, skipped: 0)
+2025-12-01 00:01:24,507 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:01:24,507 - __main__ - INFO - Processed 700 messages (total seen: 700, skipped: 0)
+2025-12-01 00:01:28,784 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:01:28,784 - __main__ - INFO - Processed 800 messages (total seen: 800, skipped: 0)
+2025-12-01 00:01:32,945 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:01:32,946 - __main__ - INFO - Processed 900 messages (total seen: 900, skipped: 0)
+2025-12-01 00:01:36,748 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:01:36,748 - __main__ - INFO - Processed 1000 messages (total seen: 1000, skipped: 0)
+2025-12-01 00:01:40,805 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:01:40,805 - __main__ - INFO - Processed 1100 messages (total seen: 1100, skipped: 0)
+2025-12-01 00:01:44,528 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:01:44,528 - __main__ - INFO - Processed 1200 messages (total seen: 1200, skipped: 0)
+2025-12-01 00:01:48,296 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:01:48,296 - __main__ - INFO - Processed 1300 messages (total seen: 1300, skipped: 0)
+2025-12-01 00:01:51,250 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:01:51,250 - __main__ - INFO - Processed 1400 messages (total seen: 1400, skipped: 0)
+2025-12-01 00:01:54,217 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:01:54,218 - __main__ - INFO - Processed 1500 messages (total seen: 1500, skipped: 0)
+2025-12-01 00:01:57,471 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:01:57,471 - __main__ - INFO - Processed 1600 messages (total seen: 1600, skipped: 0)
+2025-12-01 00:02:03,730 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:02:03,730 - __main__ - INFO - Processed 1700 messages (total seen: 1700, skipped: 0)
+2025-12-01 00:02:07,646 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:02:07,646 - __main__ - INFO - Processed 1800 messages (total seen: 1800, skipped: 0)
+2025-12-01 00:02:11,383 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:02:11,383 - __main__ - INFO - Processed 1900 messages (total seen: 1900, skipped: 0)
+2025-12-01 00:02:15,180 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:02:15,180 - __main__ - INFO - Processed 2000 messages (total seen: 2000, skipped: 0)
+2025-12-01 00:02:19,487 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:02:19,488 - __main__ - INFO - Processed 2100 messages (total seen: 2100, skipped: 0)
+2025-12-01 00:02:23,518 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:02:23,519 - __main__ - INFO - Processed 2200 messages (total seen: 2200, skipped: 0)
+2025-12-01 00:02:27,128 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:02:27,129 - __main__ - INFO - Processed 2300 messages (total seen: 2300, skipped: 0)
+2025-12-01 00:02:30,592 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:02:30,592 - __main__ - INFO - Processed 2400 messages (total seen: 2400, skipped: 0)
+2025-12-01 00:02:34,511 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:02:34,511 - __main__ - INFO - Processed 2500 messages (total seen: 2500, skipped: 0)
+2025-12-01 00:02:38,839 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:02:38,839 - __main__ - INFO - Processed 2600 messages (total seen: 2600, skipped: 0)
+2025-12-01 00:02:43,368 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:02:43,369 - __main__ - INFO - Processed 2700 messages (total seen: 2700, skipped: 0)
+2025-12-01 00:02:47,267 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:02:47,267 - __main__ - INFO - Processed 2800 messages (total seen: 2800, skipped: 0)
+2025-12-01 00:02:48,184 - __main__ - WARNING - Large gap detected: 10517.42s between ticks
+2025-12-01 00:02:48,287 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:02:48,287 - __main__ - INFO - Processed 2900 messages (total seen: 2900, skipped: 0)
+2025-12-01 00:02:48,584 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:02:48,584 - __main__ - INFO - Processed 3000 messages (total seen: 3000, skipped: 0)
+2025-12-01 00:02:49,389 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:02:49,389 - __main__ - INFO - Processed 3100 messages (total seen: 3100, skipped: 0)
+2025-12-01 00:02:50,734 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:02:50,734 - __main__ - INFO - Processed 3200 messages (total seen: 3200, skipped: 0)
+2025-12-01 00:02:50,974 - __main__ - WARNING - Large gap detected: 15.94s between ticks
+2025-12-01 00:02:53,038 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:02:53,038 - __main__ - INFO - Processed 3300 messages (total seen: 3300, skipped: 0)
+2025-12-01 00:02:53,234 - __main__ - WARNING - Large gap detected: 16.08s between ticks
+2025-12-01 00:02:53,751 - __main__ - WARNING - Timestamp out of order: 2025-11-30 19:22:26.432215+00:00 < 2025-12-01 00:01:09.264397+00:00 (diff: 16722.83s)
+2025-12-01 00:02:53,751 - __main__ - WARNING - Adding tick with out-of-order timestamp (may indicate data quality issue)
+2025-12-01 00:07:50,460 - kafka.coordinator.heartbeat - WARNING - Consumer poll timeout has expired. This means the time between subsequent calls to poll() was longer than the configured max_poll_interval_ms, which typically implies that the poll loop is spending too much time processing messages. You can address this either by increasing max_poll_interval_ms or by reducing the maximum size of batches returned in poll() with max_poll_records.
+2025-12-01 00:07:50,467 - kafka.coordinator - INFO - Leaving consumer group feature-pipeline (member kafka-python-2.3.0-b49aa98b-1bd2-44f0-8dd9-a20cbc3dd3fa).
+2025-12-01 00:07:50,543 - kafka.coordinator - INFO - LeaveGroup request for group feature-pipeline returned successfully
+2025-12-01 00:07:54,039 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:07:54,040 - __main__ - INFO - Processed 3400 messages (total seen: 3400, skipped: 0)
+2025-12-01 00:16:44,377 - __main__ - INFO - Wrote 100 features to data/processed/features_live_20251201_000100.parquet
+2025-12-01 00:16:44,379 - __main__ - INFO - Processed 3500 messages (total seen: 3500, skipped: 0)
+2025-12-01 00:16:44,382 - kafka.coordinator.consumer - INFO - Failing OffsetCommit request since the consumer is not part of an active group
+2025-12-01 00:16:44,382 - kafka.conn - ERROR - <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: socket disconnected
+2025-12-01 00:16:44,382 - kafka.conn - ERROR - <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Closing connection. KafkaConnectionError: socket disconnected
+2025-12-01 00:16:44,382 - kafka.coordinator.consumer - ERROR - Offset commit failed: This is likely to cause duplicate message delivery
+Traceback (most recent call last):
+  File "/Users/mel/Downloads/Crypto-Project-FOAI_edited-mel/.venv/lib/python3.9/site-packages/kafka/coordinator/consumer.py", line 594, in _maybe_auto_commit_offsets_sync
+    self.commit_offsets_sync(self._subscription.all_consumed_offsets(), timeout_ms=timeout_ms)
+  File "/Users/mel/Downloads/Crypto-Project-FOAI_edited-mel/.venv/lib/python3.9/site-packages/kafka/coordinator/consumer.py", line 582, in commit_offsets_sync
+    raise future.exception # pylint: disable-msg=raising-bad-type
+kafka.errors.CommitFailedError: CommitFailedError: Offset commit cannot be completed since the consumer is not part of an active group for auto partition assignment; it is likely that the consumer was kicked out of the group.
+2025-12-01 00:16:44,383 - kafka.coordinator.consumer - INFO - Revoking previously assigned partitions {TopicPartition(topic='ticks.raw', partition=0), TopicPartition(topic='ticks.raw', partition=1), TopicPartition(topic='ticks.raw', partition=2)} for group feature-pipeline
+2025-12-01 00:16:44,383 - kafka.coordinator - INFO - (Re-)joining group feature-pipeline
+2025-12-01 00:16:44,390 - kafka.coordinator - INFO - Received member id kafka-python-2.3.0-48671b8c-f603-4255-8284-fb7414a26814 for group feature-pipeline; will retry join-group
+2025-12-01 00:16:44,390 - kafka.coordinator - INFO - Failed to join group feature-pipeline: [Error 79] MemberIdRequiredError
+2025-12-01 00:16:44,390 - kafka.coordinator - INFO - (Re-)joining group feature-pipeline
+2025-12-01 00:16:44,483 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=localhost:9092 <connecting> [IPv4 ('127.0.0.1', 9092)]>: connecting to localhost:9092 [('127.0.0.1', 9092) IPv4]
+2025-12-01 00:16:44,484 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=localhost:9092 <connected> [IPv4 ('127.0.0.1', 9092)]>: Connection complete.
+2025-12-01 00:16:47,399 - kafka.coordinator - INFO - Successfully joined group feature-pipeline <Generation 21 (member_id: kafka-python-2.3.0-48671b8c-f603-4255-8284-fb7414a26814, protocol: range)>
+2025-12-01 00:16:47,399 - kafka.coordinator - INFO - Elected group leader -- performing partition assignments using range
+2025-12-01 00:16:47,407 - kafka.consumer.subscription_state - INFO - Updated partition assignment: [TopicPartition(topic='ticks.raw', partition=0), TopicPartition(topic='ticks.raw', partition=1), TopicPartition(topic='ticks.raw', partition=2)]
+2025-12-01 00:16:47,407 - kafka.coordinator.consumer - INFO - Setting newly assigned partitions {TopicPartition(topic='ticks.raw', partition=0), TopicPartition(topic='ticks.raw', partition=1), TopicPartition(topic='ticks.raw', partition=2)} for group feature-pipeline
+2025-12-01 00:21:49,018 - kafka.coordinator.heartbeat - WARNING - Consumer poll timeout has expired. This means the time between subsequent calls to poll() was longer than the configured max_poll_interval_ms, which typically implies that the poll loop is spending too much time processing messages. You can address this either by increasing max_poll_interval_ms or by reducing the maximum size of batches returned in poll() with max_poll_records.
+2025-12-01 00:21:49,025 - kafka.coordinator - INFO - Leaving consumer group feature-pipeline (member kafka-python-2.3.0-48671b8c-f603-4255-8284-fb7414a26814).
+2025-12-01 00:21:49,050 - kafka.coordinator - INFO - LeaveGroup request for group feature-pipeline returned successfully

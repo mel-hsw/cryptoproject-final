@@ -1,0 +1,94 @@
+groups:
+  - name: api_alerts
+    interval: 30s
+    rules:
+      # High error rate alert
+      - alert: HighErrorRate
+        expr: |
+          rate(http_requests_total{status=~"5..",endpoint="/predict"}[5m]) > 0.01
+        for: 5m
+        labels:
+          severity: warning
+          service: volatility-api
+        annotations:
+          summary: "High error rate detected on /predict endpoint"
+          description: "Error rate is {{ $value | humanizePercentage }} for the last 5 minutes"
+          runbook_url: "https://github.com/your-repo/docs/runbook.md#high-error-rate"
+
+      # High latency alert (p95 > 800ms)
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95, rate(prediction_latency_seconds_bucket[5m])) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: volatility-api
+        annotations:
+          summary: "p95 latency exceeds 800ms threshold"
+          description: "p95 latency is {{ $value | humanizeDuration }} (threshold: 800ms)"
+          runbook_url: "https://github.com/your-repo/docs/runbook.md#high-latency"
+
+      # Model not loaded alert
+      - alert: ModelNotLoaded
+        expr: |
+          model_loaded == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: volatility-api
+        annotations:
+          summary: "Model is not loaded"
+          description: "Model failed to load or became unloaded"
+          runbook_url: "https://github.com/your-repo/docs/runbook.md#model-not-loaded"
+
+      # High request rate alert (optional - for monitoring)
+      - alert: HighRequestRate
+        expr: |
+          rate(http_requests_total{endpoint="/predict"}[5m]) > 100
+        for: 5m
+        labels:
+          severity: info
+          service: volatility-api
+        annotations:
+          summary: "High request rate detected"
+          description: "Request rate is {{ $value | humanize }} requests/second"
+
+      # High consumer lag alert
+      - alert: HighConsumerLag
+        expr: |
+          sum(kafka_consumer_lag) by (consumer_group, topic) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          service: kafka-consumer
+        annotations:
+          summary: "High Kafka consumer lag detected"
+          description: "Consumer lag is {{ $value }} messages for {{ $labels.consumer_group }} on topic {{ $labels.topic }}"
+          runbook_url: "https://github.com/your-repo/docs/runbook.md#high-consumer-lag"
+
+      # Consumer disconnected alert
+      - alert: ConsumerDisconnected
+        expr: |
+          kafka_consumer_connected == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: kafka-consumer
+        annotations:
+          summary: "Kafka consumer disconnected"
+          description: "Consumer {{ $labels.consumer_group }} on topic {{ $labels.topic }} is disconnected"
+          runbook_url: "https://github.com/your-repo/docs/runbook.md#consumer-disconnected"
+
+      # Service unavailable alert
+      - alert: ServiceUnavailable
+        expr: |
+          up{job="volatility-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: volatility-api
+        annotations:
+          summary: "API service is down"
+          description: "The volatility API service is not responding"
+          runbook_url: "https://github.com/your-repo/docs/runbook.md#service-unavailable"
+

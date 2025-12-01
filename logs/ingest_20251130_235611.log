@@ -1,0 +1,61 @@
+2025-11-30 23:56:11,434 - __main__ - INFO - Starting Coinbase WebSocket Ingestor
+2025-11-30 23:56:11,434 - __main__ - INFO - Trading pairs: ['BTC-USD']
+2025-11-30 23:56:11,434 - __main__ - INFO - Kafka topic: ticks.raw
+2025-11-30 23:56:11,435 - __main__ - INFO - ✓ Connected to Kafka at localhost:9092
+2025-11-30 23:56:11,435 - __main__ - INFO - Writing raw data to data/raw/ticks_BTCUSD_20251130_235611.ndjson
+2025-11-30 23:56:11,435 - __main__ - INFO - Starting ingestion (press Ctrl+C to stop)
+2025-11-30 23:56:11,438 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-producer-1, node_id=bootstrap-0 host=localhost:9092 <connecting> [IPv6 ('::1', 9092, 0, 0)]>: connecting to localhost:9092 [('::1', 9092, 0, 0) IPv6]
+2025-11-30 23:56:11,438 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-producer-1, node_id=bootstrap-0 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Connection complete.
+2025-11-30 23:56:11,611 - websocket - INFO - Websocket connected
+2025-11-30 23:56:11,611 - __main__ - INFO - WebSocket connected to wss://advanced-trade-ws.coinbase.com
+2025-11-30 23:56:11,611 - __main__ - INFO - Sending subscription: {'type': 'subscribe', 'product_ids': ['BTC-USD'], 'channel': 'ticker'}
+2025-11-30 23:56:11,611 - __main__ - INFO - Subscribed to ticker channel for ['BTC-USD']
+2025-11-30 23:56:11,611 - __main__ - INFO - Subscribed to heartbeats
+2025-11-30 23:56:11,637 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-producer-1, node_id=1 host=localhost:9092 <connecting> [IPv6 ('::1', 9092, 0, 0)]>: connecting to localhost:9092 [('::1', 9092, 0, 0) IPv6]
+2025-11-30 23:56:11,638 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-producer-1, node_id=1 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Connection complete.
+2025-11-30 23:56:11,638 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-producer-1, node_id=bootstrap-0 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Closing connection. 
+2025-11-30 23:56:12,908 - __main__ - INFO - Processed 10 messages (6.79 msg/s)
+2025-11-30 23:56:15,156 - __main__ - INFO - Processed 20 messages (5.37 msg/s)
+2025-11-30 23:56:17,656 - __main__ - INFO - Processed 30 messages (4.82 msg/s)
+2025-11-30 23:56:18,995 - __main__ - INFO - Processed 40 messages (5.29 msg/s)
+2025-11-30 23:56:20,656 - __main__ - INFO - Processed 50 messages (5.42 msg/s)
+2025-11-30 23:56:22,997 - __main__ - INFO - Processed 60 messages (5.19 msg/s)
+2025-11-30 23:56:24,655 - __main__ - INFO - Processed 70 messages (5.29 msg/s)
+2025-11-30 23:56:26,655 - __main__ - INFO - Processed 80 messages (5.26 msg/s)
+2025-11-30 23:56:28,910 - __main__ - INFO - Processed 90 messages (5.15 msg/s)
+2025-11-30 23:56:30,909 - __main__ - INFO - Processed 100 messages (5.14 msg/s)
+2025-11-30 23:56:32,721 - __main__ - INFO - Processed 110 messages (5.17 msg/s)
+2025-11-30 23:56:34,657 - __main__ - INFO - Processed 120 messages (5.17 msg/s)
+2025-11-30 23:56:36,410 - __main__ - INFO - Processed 130 messages (5.21 msg/s)
+2025-11-30 23:56:38,048 - __main__ - INFO - Processed 140 messages (5.26 msg/s)
+2025-11-30 23:56:39,909 - __main__ - INFO - Processed 150 messages (5.27 msg/s)
+2025-11-30 23:56:41,498 - __main__ - INFO - Processed 160 messages (5.32 msg/s)
+2025-11-30 23:56:43,408 - __main__ - INFO - Processed 170 messages (5.32 msg/s)
+2025-11-30 23:56:45,247 - __main__ - INFO - Processed 180 messages (5.32 msg/s)
+2025-11-30 23:56:47,156 - __main__ - INFO - Processed 190 messages (5.32 msg/s)
+2025-11-30 23:56:49,412 - __main__ - INFO - Processed 200 messages (5.27 msg/s)
+2025-11-30 23:56:51,407 - __main__ - INFO - Processed 210 messages (5.25 msg/s)
+2025-11-30 23:56:53,251 - __main__ - INFO - Processed 220 messages (5.26 msg/s)
+2025-11-30 23:56:54,987 - __main__ - INFO - Processed 230 messages (5.28 msg/s)
+2025-11-30 23:56:56,909 - __main__ - INFO - Processed 240 messages (5.28 msg/s)
+2025-11-30 23:56:58,694 - __main__ - INFO - Processed 250 messages (5.29 msg/s)
+2025-11-30 23:57:00,755 - __main__ - INFO - Processed 260 messages (5.27 msg/s)
+2025-11-30 23:57:02,655 - __main__ - INFO - Processed 270 messages (5.27 msg/s)
+2025-11-30 23:57:04,906 - __main__ - INFO - Processed 280 messages (5.24 msg/s)
+2025-11-30 23:57:07,155 - __main__ - INFO - Processed 290 messages (5.20 msg/s)
+2025-11-30 23:57:08,907 - __main__ - INFO - Processed 300 messages (5.22 msg/s)
+2025-11-30 23:57:10,507 - __main__ - INFO - Processed 310 messages (5.25 msg/s)
+2025-11-30 23:57:12,656 - __main__ - INFO - Processed 320 messages (5.23 msg/s)
+2025-11-30 23:57:14,907 - __main__ - INFO - Processed 330 messages (5.20 msg/s)
+2025-11-30 23:57:16,911 - __main__ - INFO - Processed 340 messages (5.19 msg/s)
+2025-11-30 23:57:17,560 - __main__ - INFO - Received signal 15, initiating graceful shutdown...
+2025-11-30 23:57:27,498 - __main__ - INFO - WebSocket closed: None - None
+2025-11-30 23:57:27,498 - __main__ - INFO - Total messages processed: 343
+2025-11-30 23:57:27,498 - __main__ - INFO - Starting graceful cleanup. Total messages processed: 343
+2025-11-30 23:57:27,498 - __main__ - INFO - Flushing Kafka producer...
+2025-11-30 23:57:27,498 - __main__ - INFO - Closing Kafka producer...
+2025-11-30 23:57:27,498 - kafka.producer.kafka - INFO - <KafkaProducer client_id=kafka-python-producer-1 transactional_id=None>: Closing the Kafka producer with 10 secs timeout.
+2025-11-30 23:57:27,498 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-producer-1, node_id=1 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Closing connection. 
+2025-11-30 23:57:27,498 - __main__ - INFO - ✓ Kafka producer closed
+2025-11-30 23:57:27,498 - __main__ - INFO - ✓ File handle closed
+2025-11-30 23:57:27,499 - __main__ - INFO - Cleanup complete

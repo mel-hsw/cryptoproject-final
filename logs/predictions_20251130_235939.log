@@ -1,0 +1,49 @@
+2025-11-30 23:59:49,811 - __main__ - WARNING - kafka_metrics module not available - consumer lag tracking disabled
+2025-11-30 23:59:49,813 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=bootstrap-0 host=localhost:9092 <connecting> [IPv6 ('::1', 9092, 0, 0)]>: connecting to localhost:9092 [('::1', 9092, 0, 0) IPv6]
+2025-11-30 23:59:49,820 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=bootstrap-0 host=localhost:9092 <checking_api_versions_recv> [IPv6 ('::1', 9092, 0, 0)]>: Broker version identified as 2.6
+2025-11-30 23:59:49,820 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=bootstrap-0 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Connection complete.
+2025-11-30 23:59:49,820 - kafka.consumer.subscription_state - INFO - Updating subscribed topics to: ('ticks.features',)
+2025-11-30 23:59:49,820 - __main__ - INFO - ✓ Connected to Kafka at localhost:9092
+2025-11-30 23:59:49,820 - __main__ - INFO -   Consuming from topic: ticks.features
+2025-11-30 23:59:49,820 - __main__ - INFO - Starting Prediction Consumer
+2025-11-30 23:59:49,821 - __main__ - INFO -   API endpoint: http://localhost:8000/predict
+2025-11-30 23:59:49,821 - __main__ - INFO -   Kafka topic: ticks.features
+2025-11-30 23:59:49,821 - __main__ - INFO -   Rate limit: 120 requests/minute (2.0 requests/second)
+2025-11-30 23:59:49,821 - __main__ - INFO -   Recommended frequency: 1-2 predictions/second (60-120/minute)
+2025-11-30 23:59:49,821 - __main__ - INFO -   Consuming features and calling /predict automatically...
+2025-11-30 23:59:49,821 - __main__ - INFO - 
+2025-11-30 23:59:49,825 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=localhost:9092 <connecting> [IPv6 ('::1', 9092, 0, 0)]>: connecting to localhost:9092 [('::1', 9092, 0, 0) IPv6]
+2025-11-30 23:59:49,930 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Connection complete.
+2025-11-30 23:59:49,930 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=bootstrap-0 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Closing connection. 
+2025-11-30 23:59:50,038 - kafka.cluster - INFO - Coordinator for group/prediction-consumer is BrokerMetadata(nodeId='coordinator-1', host='localhost', port=9092, rack=None)
+2025-11-30 23:59:50,039 - kafka.coordinator - INFO - Discovered coordinator coordinator-1 for group prediction-consumer
+2025-11-30 23:59:50,039 - kafka.coordinator.heartbeat - INFO - Starting new heartbeat thread
+2025-11-30 23:59:50,039 - kafka.coordinator.consumer - INFO - Revoking previously assigned partitions set() for group prediction-consumer
+2025-11-30 23:59:50,039 - kafka.coordinator - INFO - Failed to join group prediction-consumer: NodeNotReadyError: coordinator-1
+2025-11-30 23:59:50,040 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=coordinator-1 host=localhost:9092 <connecting> [IPv6 ('::1', 9092, 0, 0)]>: connecting to localhost:9092 [('::1', 9092, 0, 0) IPv6]
+2025-11-30 23:59:50,144 - kafka.coordinator - INFO - Failed to join group prediction-consumer: NodeNotReadyError: coordinator-1
+2025-11-30 23:59:50,145 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=coordinator-1 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Connection complete.
+2025-11-30 23:59:50,247 - kafka.coordinator - INFO - (Re-)joining group prediction-consumer
+2025-11-30 23:59:50,253 - kafka.coordinator - INFO - Received member id kafka-python-2.3.0-d9d9e6a2-949a-493f-b046-6e32a9f43235 for group prediction-consumer; will retry join-group
+2025-11-30 23:59:50,253 - kafka.coordinator - INFO - Failed to join group prediction-consumer: [Error 79] MemberIdRequiredError
+2025-11-30 23:59:50,253 - kafka.coordinator - INFO - (Re-)joining group prediction-consumer
+2025-11-30 23:59:53,264 - kafka.coordinator - INFO - Successfully joined group prediction-consumer <Generation 16 (member_id: kafka-python-2.3.0-d9d9e6a2-949a-493f-b046-6e32a9f43235, protocol: range)>
+2025-11-30 23:59:53,265 - kafka.coordinator - INFO - Elected group leader -- performing partition assignments using range
+2025-11-30 23:59:53,273 - kafka.consumer.subscription_state - INFO - Updated partition assignment: [TopicPartition(topic='ticks.features', partition=0), TopicPartition(topic='ticks.features', partition=1), TopicPartition(topic='ticks.features', partition=2)]
+2025-11-30 23:59:53,273 - kafka.coordinator.consumer - INFO - Setting newly assigned partitions {TopicPartition(topic='ticks.features', partition=0), TopicPartition(topic='ticks.features', partition=1), TopicPartition(topic='ticks.features', partition=2)} for group prediction-consumer
+2025-12-01 00:00:45,243 - __main__ - INFO - Received signal 15, initiating graceful shutdown...
+2025-12-01 00:00:45,246 - kafka.coordinator.heartbeat - INFO - Stopping heartbeat thread
+2025-12-01 00:00:45,246 - kafka.coordinator - INFO - Leaving consumer group prediction-consumer (member kafka-python-2.3.0-d9d9e6a2-949a-493f-b046-6e32a9f43235).
+2025-12-01 00:00:45,251 - kafka.coordinator - INFO - LeaveGroup request for group prediction-consumer returned successfully
+2025-12-01 00:00:45,251 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Closing connection. 
+2025-12-01 00:00:45,251 - kafka.consumer.fetcher - INFO - Fetch to node 1 failed: Cancelled: <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>
+2025-12-01 00:00:45,251 - kafka.conn - INFO - <BrokerConnection client_id=kafka-python-2.3.0, node_id=coordinator-1 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Closing connection. 
+2025-12-01 00:00:45,251 - __main__ - ERROR - Unexpected error: [Errno 9] Bad file descriptor
+2025-12-01 00:00:45,251 - __main__ - INFO - Cleaning up...
+2025-12-01 00:00:45,251 - __main__ - INFO - ==================================================
+2025-12-01 00:00:45,251 - __main__ - INFO - Prediction Consumer Summary:
+2025-12-01 00:00:45,251 - __main__ - INFO -   Total predictions: 0
+2025-12-01 00:00:45,251 - __main__ - INFO -   Errors: 0
+2025-12-01 00:00:45,251 - __main__ - INFO -   Runtime: 55.4 seconds
+2025-12-01 00:00:45,251 - __main__ - INFO -   Average rate: 0.00 pred/s
+2025-12-01 00:00:45,251 - __main__ - INFO - ==================================================
