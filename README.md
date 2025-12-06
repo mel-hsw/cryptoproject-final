@@ -2,6 +2,8 @@
 
 Real-time cryptocurrency volatility detection service that streams Coinbase data, computes features, and makes ML predictions via FastAPI.
 
+Name: Asli Gulcur, Melissa Wong
+
 ---
 
 # Quickstart
@@ -10,14 +12,12 @@ Real-time cryptocurrency volatility detection service that streams Coinbase data
 ```bash
 git clone <repository-url> && cd cryptoproject-final
 docker compose -f docker/compose.yaml up -d
-curl http://localhost:8000/health
 ```
 
 ## Windows (PowerShell)
 ```powershell
 git clone <repository-url>; cd cryptoproject-final
 docker compose -f docker/compose.yaml up -d
-Invoke-RestMethod -Uri "http://localhost:8000/health"
 ```
 
 API Metrics (Prometheus): http://localhost:8000/metrics
@@ -39,13 +39,12 @@ Model Tracking (MLflow): http://localhost:5001
 **Key Directories:**
 
 - **`api/`** - FastAPI service exposing `/predict`, `/health`, `/version`, `/metrics` endpoints
-- **`scripts/`** - Pipeline orchestration and data ingestion scripts
-- **`features/`** - Real-time feature engineering from raw ticks
-- **`models/`** - ML model training, inference, and artifacts
+- **`scripts/`** - Pipeline orchestration, data ingestion, and feature engineering
+- **`models/`** - ML model feature preparation and artifacts
 - **`docker/`** - Containerized services (Kafka, API, monitoring)
 - **`docs/`** - Operational documentation and performance reports
-- **`data/`** - Raw and processed data (not committed to git)
-- **`logs/`** - Application logs (not committed to git)
+- **`data/`** - Raw and processed data (persisted via Docker volumes)
+- **`logs/`** - Application logs (persisted via Docker volumes)
 
 ---
 
@@ -54,9 +53,11 @@ Model Tracking (MLflow): http://localhost:5001
 ## System Flow
 
 ```
-Coinbase WebSocket → Ingest Container → Kafka (ticks.raw) → 
-Featurizer Container → Kafka (ticks.features) → 
+Coinbase WebSocket → Ingest Container → Kafka (ticks.raw) →
+Featurizer Container → Kafka (ticks.features) →
 Prediction Consumer → FastAPI /predict → Prometheus → Grafana
+                                  ↓
+                        PR-AUC Monitor → MLflow (production metrics)
 ```
 
 ## Components
@@ -69,7 +70,7 @@ Prediction Consumer → FastAPI /predict → Prometheus → Grafana
   - Optionally saves raw data to `data/raw/` (persisted via volume)
 
 ### Feature Engineering
-- **Featurizer Container** (`features/featurizer.py`)
+- **Featurizer Container** (`scripts/featurizer.py`)
   - Consumes from Kafka `ticks.raw`
   - Computes windowed features (30s, 60s, 300s windows)
   - Publishes features to Kafka `ticks.features` topic
@@ -92,12 +93,18 @@ Prediction Consumer → FastAPI /predict → Prometheus → Grafana
   - Loads models from filesystem at startup
   - Exposes Prometheus metrics for monitoring
 
-### Model Management
+### Model Management & Monitoring
 - **MLflow** (Port 5001)
-  - Experiment tracking during training
-  - Model registry and versioning
-  - Metrics comparison and visualization
-  - **Note:** Models are served from filesystem, not directly from MLflow
+  - **Production monitoring only** (training scripts removed for submission)
+  - PR-AUC tracking over time (via pr-auc-monitor service)
+  - Time-series visualization of production metrics
+  - **Note:** Models are pre-trained and served from filesystem
+
+- **PR-AUC Monitor** (`scripts/monitor_pr_auc.py`)
+  - Continuously monitors model performance on live predictions
+  - Compares predictions with labels from featurizer
+  - Logs metrics to MLflow every 10 minutes for time-series visualization
+  - Access charts at http://localhost:5001
 
 ### Observability
 - **Prometheus** (Port 9090)
@@ -177,9 +184,13 @@ Invoke-RestMethod -Uri "http://localhost:8000/health"
 
 **What this does:**
 - Builds Docker images (if needed)
-- Starts all services (Kafka, Zookeeper, MLflow, API, Prometheus, Grafana)
+- Starts all services:
+  - **Infrastructure:** Kafka (KRaft mode - no Zookeeper), MLflow
+  - **API:** FastAPI service
+  - **Pipeline:** ingest, featurizer, prediction-consumer, pr-auc-monitor
+  - **Monitoring:** Prometheus, Grafana
 - Creates Kafka topics automatically (via kafka-init service)
-- Starts pipeline components (ingest, featurizer, prediction-consumer)
+- All pipeline components run as Docker containers
 
 ---
 
@@ -282,63 +293,64 @@ Invoke-RestMethod http://localhost:8000/version  # Windows
 
 ## Overview
 
-This system uses **MLflow for experiment tracking** during model training, while **model artifacts are stored on the filesystem** for production serving. This separation provides flexibility for version control, rollback, and production deployments.
+This system uses **pre-trained models stored on the filesystem** for production serving, with **MLflow used exclusively for monitoring production predictions**. Training scripts have been deliberately removed for this project submission - models were trained offline and committed as artifacts.
 
 ## Model Lifecycle Flow
 
 ```
-Training → MLflow (logs metrics/params) → Save to filesystem → API loads from filesystem
+Pre-trained Models (filesystem) → API loads models → Production predictions → MLflow (logs metrics)
 ```
 
-### 1. Training Phase
-- Models are trained using `models/train.py`
-- **MLflow tracks:**
-  - Model parameters (hyperparameters, feature sets)
-  - Training metrics (PR-AUC, F1, precision, recall)
-  - Model artifacts (saved to MLflow artifact store)
-  - Experiment metadata (git SHA, timestamps)
+**Note:** Training scripts have been deliberately removed for this project submission. Models were trained offline and committed to the repository as artifacts.
 
-### 2. Model Storage
-- Trained models are saved to `models/artifacts/{model_name}/model.pkl`
-- MLflow logs reference to these artifacts
+### 1. Model Storage
+- Pre-trained models are stored in `models/artifacts/{model_name}/model.pkl`
 - Models are versioned by directory structure:
   ```
   models/artifacts/
   ├── baseline/
-  │   └── model.pkl
-  ├── logistic_regression/
-  │   └── model.pkl
+  │   └── model.pkl                      # Z-score baseline model
   └── random_forest/
-      └── model.pkl
+      ├── model.pkl                       # Random Forest model
+      ├── threshold_metadata.json         # Optimized threshold (0.034)
+      └── evaluation_metrics.json         # Training metrics
   ```
 
-### 3. Production Serving
-- **API loads models from filesystem** at startup (not directly from MLflow)
+### 2. Production Serving
+- **API loads models from filesystem** at startup
 - Model selection via environment variables:
   - `MODEL_VARIANT`: `ml` (trained model) or `baseline` (z-score fallback)
   - `MODEL_VERSION`: `random_forest`, `logistic_regression`, etc.
 - Models are loaded once at startup for performance
 
+### 3. Production Monitoring with MLflow
+- **MLflow is used exclusively for monitoring production predictions** (not for training)
+- **PR-AUC Monitor** (`scripts/monitor_pr_auc.py`) continuously logs production metrics:
+  - PR-AUC, precision, recall, F1 score
+  - True positives, false positives, true negatives, false negatives
+  - Time-series visualization at http://localhost:5001
+- Metrics are logged every 10 minutes for ongoing performance tracking
+
 ## Why This Architecture?
 
 **Separation of Concerns:**
-- **MLflow** = Experiment tracking, comparison, and model registry
-- **Filesystem** = Production model storage and versioning
+- **Filesystem** = Model storage and versioning (pre-trained models)
 - **API** = Fast model loading and serving
+- **MLflow** = Production monitoring and metrics tracking
 
 **Benefits:**
-- ✅ Fast startup (no MLflow API calls during serving)
+- ✅ Fast startup (no training or MLflow API calls during serving)
 - ✅ Version control via filesystem (git-friendly)
 - ✅ Easy rollback (change `MODEL_VARIANT` env var)
-- ✅ MLflow UI for experiment comparison
-- ✅ Production isolation (API doesn't depend on MLflow availability)
+- ✅ MLflow UI for production metrics visualization
+- ✅ Production isolation (API doesn't depend on MLflow for serving)
 
 ## MLflow Access
 
 - **MLflow UI:** http://localhost:5001
-- **View experiments:** Navigate to "crypto-volatility-detection" experiment
-- **Compare runs:** Use MLflow UI to compare different model versions
-- **Model registry:** Models are tracked but served from filesystem
+- **View production metrics:** Navigate to "crypto-volatility-production" experiment
+- **Time-series charts:** View PR-AUC, precision, recall, and F1 score over time
+- **Note:** MLflow is used for production monitoring only (training scripts removed)
 
 ## Model Versioning
 
@@ -349,15 +361,16 @@ Models are versioned using:
 
 **To switch models:**
 ```bash
-# Use random_forest model
+# Use random_forest model (default ML model)
 MODEL_VARIANT=ml MODEL_VERSION=random_forest docker compose -f docker/compose.yaml up -d api
 
-# Use logistic_regression model
-MODEL_VARIANT=ml MODEL_VERSION=logistic_regression docker compose -f docker/compose.yaml up -d api
-
-# Use baseline (z-score) model
+# Use baseline (z-score) model (fallback)
 MODEL_VARIANT=baseline docker compose -f docker/compose.yaml up -d api
 ```
+
+**Available Models:**
+- `random_forest` - Primary ML model (optimized threshold: 0.034)
+- `baseline` - Z-score statistical model (fallback)
 
 **Check current model:**
 ```bash
@@ -381,52 +394,15 @@ curl http://localhost:8000/version
 - **macOS/Linux:** `lsof -i :8000`
 - **Windows:** `netstat -ano | findstr :8000`
 
-See `docs/runbook.md` for detailed troubleshooting.
-
----
-
-# Model Registry & Comparison
-
-## Register Models in MLflow
-
-Register existing models from the artifacts folder:
-
-```bash
-# Register all models (baseline + random_forest)
-python scripts/register_models_mlflow.py
-
-# Register specific model
-python scripts/register_models_mlflow.py --model baseline
-python scripts/register_models_mlflow.py --model random_forest
-```
-
-**View registered models:** http://localhost:5001 → Models → volatility-detector
-
-## Enable Prediction Logging
-
-Enable prediction logging for model comparison:
-
-```bash
-LOG_PREDICTIONS=true docker compose -f docker/compose.yaml up -d prediction-consumer
-```
-
-Predictions are logged to:
-- Kafka topic: `predictions.log`
-- File fallback: `logs/predictions/` (if Kafka unavailable)
-
-## Model Comparison Dashboard
-
-View ML vs Baseline comparison in Grafana:
-- **Grafana:** http://localhost:3000 → "Model Comparison: ML vs Baseline" section
-- Shows prediction scores, rates, and averages for both models
-
-**See:** `docs/model_registry_guide.md` for detailed instructions
+See [docs/w6_runbook.md](docs/w6_runbook.md) for detailed troubleshooting and operations guide.
 
 ---
 
 # Additional Resources
 
-- **Runbook:** `docs/runbook.md` - Operations guide
-- **SLOs:** `docs/slo.md` - Service level objectives (p95 ≤ 800ms)
-- **Performance:** `docs/performance_summary.md` - Benchmarks
-- **Model Registry:** `docs/model_registry_guide.md` - MLflow model registry and comparison guide
+- **[Runbook](docs/w6_runbook.md)** - Complete operations guide (startup, health checks, troubleshooting)
+- **[Performance Summary](docs/w6_performance_summary.md)** - Latency benchmarks, uptime, PR-AUC metrics
+- **[Data Drift Summary](docs/w6_drift_summary.md)** - Drift detection reports and analysis
+- **[SLO Definition](docs/w6_slo.md)** - Service level objectives (p95 ≤ 800ms target)
+- **[Architecture Rationale](docs/w4_selection_rationale.md)** - Design decisions and trade-offs
+- **[Team Charter](docs/w4_team_charter.md)** - Project scope and responsibilities

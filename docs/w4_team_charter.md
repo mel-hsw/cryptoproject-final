@@ -1,9 +1,9 @@
 # Team Charter
 
 **Project:** Real-Time Crypto AI Service  
-**Date:** November 25, 2025  
+**Date:** December 5, 2025  
 **Team Size:** 2 members
-
+**Team Size:** Asli Gulcur, Melissa wong
 ---
 
 ## Team Overview

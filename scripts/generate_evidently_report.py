@@ -368,7 +368,7 @@ def merge_features_with_predictions(
 def generate_report(
     reference_df: pd.DataFrame,
     current_df: pd.DataFrame,
-    output_path: str = "reports/evidently/data_drift_report.html",
+    output_path: str = "docs/data_drift_report.html",
     reference_predictions: Optional[pd.DataFrame] = None,
     current_predictions: Optional[pd.DataFrame] = None,
     include_prediction_drift: bool = True,
@@ -587,7 +587,7 @@ Examples:
 
     parser.add_argument(
         "--output",
-        default="reports/evidently/production_monitoring_report.html",
+        default="docs/production_monitoring_report.html",
         help="Output path for HTML report",
     )
     parser.add_argument(

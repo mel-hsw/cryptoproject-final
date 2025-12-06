@@ -54,7 +54,7 @@ jobs:
     
     - name: Run API integration test
       run: |
-        pytest tests/test_api_integration.py -v
+        pytest scripts/test_api_integration.py -v
       env:
         API_BASE_URL: http://localhost:8000
     

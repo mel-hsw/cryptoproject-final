@@ -1,8 +1,8 @@
 """
 Feature preparation and model inference.
-Consolidates feature selection logic and model prediction from train.py and infer.py.
 
 This is the single source of truth for MODEL_FEATURES, feature preparation, and inference.
+Provides consistent feature selection and model prediction across the entire pipeline.
 """
 
 import pickle
@@ -152,12 +152,12 @@ class VolatilityPredictor:
                     "threshold_used",
                     threshold_metadata.get(
                         "threshold_10pct",
-                        threshold_metadata.get("optimal_threshold", 0.5),
+                        threshold_metadata.get("optimal_threshold", 0.05),
                     ),
                 )
         else:
             # Default threshold (fallback)
-            self.threshold = 0.5
+            self.threshold = 0.05
 
         self.prediction_count = 0
         self.total_inference_time = 0.0

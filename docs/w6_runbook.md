@@ -231,9 +231,6 @@ curl http://localhost:8000/version  # Verify "model_variant": "baseline"
 ```bash
 # Use random_forest model (default)
 MODEL_VARIANT=ml MODEL_VERSION=random_forest docker compose -f docker/compose.yaml up -d api
-
-# Use logistic_regression model
-MODEL_VARIANT=ml MODEL_VERSION=logistic_regression docker compose -f docker/compose.yaml up -d api
 ```
 
 **Verify Model Change:**
