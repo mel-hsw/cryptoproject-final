@@ -31,6 +31,11 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Provide module alias so baseline pickle loads even if it was created with `import baseline`
+import models.baseline as baseline  # noqa: E402
+
+sys.modules["baseline"] = baseline
+
 from models.feature_preparation import (  # noqa: E402
     VolatilityPredictor,
     prepare_features_for_inference,
@@ -746,12 +751,16 @@ async def version():
         except Exception:
             pass
 
+    is_baseline = MODEL_VARIANT == "baseline"
+    model_name = "baseline_v1" if is_baseline else f"{MODEL_VERSION}_v1"
+    model_path = BASELINE_MODEL_PATH if is_baseline else MODEL_PATH
+
     return VersionResponse(
-        model=f"{MODEL_VERSION}_v1",
+        model=model_name,
         sha=git_sha,
         version="v1.2",
         model_variant=MODEL_VARIANT,
-        model_path=MODEL_PATH,
+        model_path=model_path,
     )
 
 

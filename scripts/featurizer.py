@@ -28,7 +28,7 @@ try:
     import sys
 
     sys.path.insert(0, str(Path(__file__).parent.parent))
-    from scripts.kafka_metrics import (
+    from scripts.kafka_metrics import (  # type: ignore[import]
         start_metrics_server,
         update_consumer_lag,
         set_consumer_connected,
