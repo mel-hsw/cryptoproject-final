@@ -36,6 +36,54 @@ Model Tracking (MLflow): http://localhost:5001
 
 ---
 
+# Configuration Management
+
+## Environment Variables
+
+The system uses environment variables for configuration across all services. This approach:
+- **Prevents configuration mistakes** by providing a centralized template
+- **Reduces secret leakage risk** by keeping sensitive values out of version control
+- **Simplifies deployment** by providing environment-specific configurations
+
+### Quick Setup
+
+1. **Copy the template:**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Customize (optional):** The default values are production-ready, but you can customize:
+   - Model variant: `MODEL_VARIANT=ml` or `MODEL_VARIANT=baseline`
+   - Model version: `MODEL_VERSION=random_forest`
+   - Log level: `LOG_LEVEL=INFO` or `LOG_LEVEL=DEBUG`
+   - Kafka settings: brokers, topics, consumer timeouts
+
+3. **Run services:** Docker Compose automatically loads `.env`:
+   ```bash
+   docker compose -f docker/compose.yaml up -d
+   ```
+
+### Key Configuration Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MODEL_VARIANT` | `ml` | Model type: `ml` (trained) or `baseline` (z-score) |
+| `MODEL_VERSION` | `random_forest` | Model version when using `ml` variant |
+| `KAFKA_BOOTSTRAP_SERVERS` | `kafka:29092` | Kafka broker addresses |
+| `MLFLOW_TRACKING_URI` | `http://mlflow:5000` | MLflow tracking server URI |
+| `LOG_LEVEL` | `INFO` | Logging verbosity (DEBUG, INFO, WARNING, ERROR) |
+
+See [.env.example](.env.example) for the complete list of configuration options.
+
+### Security Notes
+
+- ✅ `.env` is in `.gitignore` - never committed to version control
+- ✅ `.env.example` provides a safe template without secrets
+- ✅ This project uses public Coinbase market data (no API keys required)
+- ⚠️ For production deployments, use secret management services (AWS Secrets Manager, HashiCorp Vault, etc.)
+
+---
+
 **Key Directories:**
 
 - **`api/`** - FastAPI service exposing `/predict`, `/health`, `/version`, `/metrics` endpoints

@@ -1,0 +1,53 @@
+{
+  "start_time": "2025-12-06T11:57:58.460460",
+  "tests": {
+    "docker_services": {
+      "status": "passed",
+      "services": [
+        "kafka",
+        "api",
+        "featurizer",
+        "prediction-consumer"
+      ]
+    },
+    "api_health": {
+      "status": "passed",
+      "data": {
+        "status": "healthy",
+        "timestamp": "2025-12-06T16:57:58.753132Z",
+        "model_loaded": true,
+        "kafka_connected": true
+      }
+    },
+    "api_version": {
+      "status": "passed",
+      "data": {
+        "model": "random_forest_v1",
+        "sha": "dev",
+        "version": "v1.2",
+        "model_variant": "ml",
+        "model_path": "/app/models/artifacts/random_forest/model.pkl"
+      }
+    },
+    "predictions": {
+      "status": "passed",
+      "test_cases": 3,
+      "avg_latency_ms": 17.18,
+      "max_latency_ms": 17.88,
+      "slo_pass": true
+    },
+    "prometheus_metrics": {
+      "status": "passed",
+      "found_metrics": [
+        "http_requests_total",
+        "prediction_latency_seconds",
+        "predictions_total"
+      ],
+      "total_metrics": 3
+    }
+  },
+  "metrics": {},
+  "status": "PASSED",
+  "end_time": "2025-12-06T11:57:58.813235",
+  "duration_seconds": 0.35
+}

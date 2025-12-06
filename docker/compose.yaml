@@ -1,8 +1,9 @@
 # Default compose file - uses KRaft mode (Kafka without Zookeeper)
 # Usage: docker compose -f docker/compose.yaml up -d
 # Configuration:
-#   Copy ../.env.example to ../.env and customize values
-#   Or set environment variables directly before running docker compose
+#   1. Copy .env.example to .env: cp .env.example .env
+#   2. Customize .env with your settings (optional - defaults are production-ready)
+#   3. Run docker compose - it will automatically load .env
 #
 # Architecture:
 #   Coinbase WS → ingest → Kafka (ticks.raw) → featurizer → Kafka (ticks.features) →
@@ -23,6 +24,8 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: kafka
+    env_file:
+      - ../.env
     ports:
       - "9092:9092"  # PLAINTEXT_HOST listener (external access)
       - "9093:9093"  # Controller port for KRaft
@@ -63,6 +66,8 @@ services:
   mlflow:
     image: ghcr.io/mlflow/mlflow:v2.10.2
     container_name: mlflow-server
+    env_file:
+      - ../.env
     ports:
       - "5001:5000"
     volumes:
@@ -89,6 +94,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.api
     container_name: volatility-api
+    env_file:
+      - ../.env
     ports:
       - "8000:8000"
     environment:
@@ -153,6 +160,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.ingestor
     container_name: crypto-ingest
+    env_file:
+      - ../.env
     environment:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - KAFKA_TOPIC_RAW=ticks.raw
@@ -180,6 +189,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.ingestor
     container_name: crypto-featurizer
+    env_file:
+      - ../.env
     environment:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - FEATURIZER_METRICS_PORT=8001
@@ -215,6 +226,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.ingestor
     container_name: crypto-prediction-consumer
+    env_file:
+      - ../.env
     environment:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - KAFKA_TOPIC_FEATURES=ticks.features
@@ -252,6 +265,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.ingestor
     container_name: crypto-pr-auc-monitor
+    env_file:
+      - ../.env
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
@@ -320,6 +335,8 @@ services:
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
+    env_file:
+      - ../.env
     ports:
       - "3000:3000"
     environment:
