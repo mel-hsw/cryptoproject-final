@@ -28,7 +28,9 @@ def test_health_endpoint(api_url):
 
     data = response.json()
     assert "status" in data, "Response should contain 'status' field"
-    assert data["status"] == "healthy", f"Expected status 'healthy', got {data['status']}"
+    assert (
+        data["status"] == "healthy"
+    ), f"Expected status 'healthy', got {data['status']}"
 
 
 def test_version_endpoint(api_url):
@@ -41,8 +43,10 @@ def test_version_endpoint(api_url):
     assert "version" in data, "Response should contain 'version'"
 
     # Verify model variant is either 'ml' or 'baseline'
-    assert data["model_variant"] in ["ml", "baseline"], \
-        f"model_variant should be 'ml' or 'baseline', got {data['model_variant']}"
+    assert data["model_variant"] in [
+        "ml",
+        "baseline",
+    ], f"model_variant should be 'ml' or 'baseline', got {data['model_variant']}"
 
 
 def test_metrics_endpoint(api_url):
@@ -51,32 +55,27 @@ def test_metrics_endpoint(api_url):
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 
     # Verify response is text (Prometheus format)
-    assert response.headers["content-type"].startswith("text/plain"), \
-        "Metrics should be in Prometheus text format"
+    assert response.headers["content-type"].startswith(
+        "text/plain"
+    ), "Metrics should be in Prometheus text format"
 
     # Verify some expected metrics are present
     metrics_text = response.text
-    assert "api_request_duration_seconds" in metrics_text or "http_requests_total" in metrics_text, \
-        "Expected to find standard API metrics"
+    assert (
+        "api_request_duration_seconds" in metrics_text
+        or "http_requests_total" in metrics_text
+    ), "Expected to find standard API metrics"
 
 
 def test_predict_endpoint_valid_input(api_url):
     """Test that the /predict endpoint accepts valid input and returns predictions."""
-    payload = {
-        "rows": [
-            {
-                "ret_mean": 0.05,
-                "ret_std": 0.01,
-                "n": 50
-            }
-        ]
-    }
+    payload = {"rows": [{"ret_mean": 0.05, "ret_std": 0.01, "n": 50}]}
 
     response = requests.post(
         f"{api_url}/predict",
         json=payload,
         headers={"Content-Type": "application/json"},
-        timeout=10
+        timeout=10,
     )
 
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
@@ -103,7 +102,7 @@ def test_predict_endpoint_multiple_rows(api_url):
         "rows": [
             {"ret_mean": 0.05, "ret_std": 0.01, "n": 50},
             {"ret_mean": 0.02, "ret_std": 0.005, "n": 30},
-            {"ret_mean": 0.08, "ret_std": 0.02, "n": 100}
+            {"ret_mean": 0.08, "ret_std": 0.02, "n": 100},
         ]
     }
 
@@ -111,7 +110,7 @@ def test_predict_endpoint_multiple_rows(api_url):
         f"{api_url}/predict",
         json=payload,
         headers={"Content-Type": "application/json"},
-        timeout=10
+        timeout=10,
     )
 
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
@@ -141,13 +140,16 @@ def test_predict_endpoint_invalid_input(api_url):
         f"{api_url}/predict",
         json=payload,
         headers={"Content-Type": "application/json"},
-        timeout=10
+        timeout=10,
     )
 
     # Should return 422 (Unprocessable Entity) for validation error
     # or 400 (Bad Request) depending on FastAPI configuration
-    assert response.status_code in [400, 422, 500], \
-        f"Expected error status code for invalid input, got {response.status_code}"
+    assert response.status_code in [
+        400,
+        422,
+        500,
+    ], f"Expected error status code for invalid input, got {response.status_code}"
 
 
 def test_predict_endpoint_empty_input(api_url):
@@ -158,12 +160,15 @@ def test_predict_endpoint_empty_input(api_url):
         f"{api_url}/predict",
         json=payload,
         headers={"Content-Type": "application/json"},
-        timeout=10
+        timeout=10,
     )
 
     # Should handle empty input gracefully (either error or empty scores)
-    assert response.status_code in [200, 400, 422], \
-        f"Expected 200 or error code for empty input, got {response.status_code}"
+    assert response.status_code in [
+        200,
+        400,
+        422,
+    ], f"Expected 200 or error code for empty input, got {response.status_code}"
 
     if response.status_code == 200:
         data = response.json()
@@ -172,26 +177,23 @@ def test_predict_endpoint_empty_input(api_url):
 
 def test_api_latency(api_url):
     """Test that API responds within acceptable latency (based on SLO)."""
-    payload = {
-        "rows": [
-            {"ret_mean": 0.05, "ret_std": 0.01, "n": 50}
-        ]
-    }
+    payload = {"rows": [{"ret_mean": 0.05, "ret_std": 0.01, "n": 50}]}
 
     start_time = time.time()
     response = requests.post(
         f"{api_url}/predict",
         json=payload,
         headers={"Content-Type": "application/json"},
-        timeout=10
+        timeout=10,
     )
     latency_ms = (time.time() - start_time) * 1000
 
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 
     # SLO target: p95 < 800ms (we'll use 1000ms for CI tolerance)
-    assert latency_ms < 1000, \
-        f"API latency {latency_ms:.2f}ms exceeds 1000ms threshold (SLO: 800ms)"
+    assert (
+        latency_ms < 1000
+    ), f"API latency {latency_ms:.2f}ms exceeds 1000ms threshold (SLO: 800ms)"
 
     print(f"API latency: {latency_ms:.2f}ms (within SLO)")
 
