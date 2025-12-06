@@ -16,18 +16,16 @@ import json
 import logging
 import os
 import signal
-import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 
 import mlflow
 import numpy as np
 import pandas as pd
 from sklearn.metrics import (
     average_precision_score,
-    precision_recall_curve,
     precision_score,
     recall_score,
     f1_score,
@@ -88,7 +86,6 @@ def load_predictions_from_kafka(
     """Load predictions from Kafka topic with improved timeout and filtering."""
     try:
         from kafka import KafkaConsumer
-        from kafka.errors import KafkaError
 
         logger.info(
             f"Loading predictions from Kafka topic {KAFKA_TOPIC_PREDICTIONS} "
@@ -326,8 +323,8 @@ def load_predictions_from_kafka(
                 )
             else:
                 logger.warning(
-                    f"Equal mix of old and recent messages suggests timestamp parsing issues "
-                    f"or messages outside the expected time range."
+                    "Equal mix of old and recent messages suggests timestamp parsing issues "
+                    "or messages outside the expected time range."
                 )
             if skipped_invalid > 0:
                 logger.warning(

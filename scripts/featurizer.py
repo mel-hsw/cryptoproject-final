@@ -12,7 +12,7 @@ import time
 import os
 from collections import deque
 from typing import Dict, Any, Optional, List
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -54,8 +54,8 @@ def _import_kafka():
 # Logging is already configured above
 
 # Import MODEL_FEATURES from consolidated feature_preparation module (single source of truth)
-import sys
-from pathlib import Path
+import sys  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 models_dir = Path(__file__).parent.parent / "models"
 if str(models_dir) not in sys.path:
@@ -449,9 +449,6 @@ class FeatureComputer:
         }
 
         current_price = self._get_midprice(current_tick)
-        current_time = (
-            self.timestamps_buffer[-1] if len(self.timestamps_buffer) > 0 else None
-        )
 
         # OPTIMIZATION: Cache window data to avoid redundant _get_window_data() calls
         # Get all window data once (largest window first for efficiency)

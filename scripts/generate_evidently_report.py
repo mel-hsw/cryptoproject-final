@@ -21,7 +21,7 @@ import json
 import pandas as pd
 from pathlib import Path
 from datetime import datetime, timedelta
-from typing import Optional, Tuple
+from typing import Optional
 
 from evidently.report import Report
 from evidently.metrics import (
@@ -29,8 +29,6 @@ from evidently.metrics import (
     ColumnDriftMetric,
     DatasetMissingValuesMetric,
     DatasetSummaryMetric,
-    RegressionQualityMetric,
-    ClassificationQualityMetric,
 )
 
 import logging
@@ -234,7 +232,6 @@ def load_predictions_from_kafka_topic(
     """
     try:
         from kafka import KafkaConsumer
-        from kafka.errors import KafkaError
 
         logger.info(f"Loading predictions from Kafka topic {topic}...")
         consumer = KafkaConsumer(

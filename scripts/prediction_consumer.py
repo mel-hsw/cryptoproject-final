@@ -65,8 +65,6 @@ try:
         / "threshold_metadata.json"
     )
     if threshold_metadata_path.exists():
-        import json
-
         with open(threshold_metadata_path, "r") as f:
             threshold_metadata = json.load(f)
             MODEL_THRESHOLD = threshold_metadata.get(
