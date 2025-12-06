@@ -41,13 +41,15 @@ Do a complete practice run to ensure:
 
 ### Part 1: System Startup (1 min)
 
-**Narration:**
-> "I'll demonstrate our real-time cryptocurrency volatility detection service. This system streams live data from Coinbase, computes features, makes ML predictions, and provides comprehensive monitoring. Let's start with a single command."
-
-**Commands:**
+**Quick Start:**
 ```bash
 cd cryptoproject-final
 docker compose -f docker/compose.yaml up -d
+```
+
+**Show docker logs:**
+```bash
+docker compose -f docker/compose.yaml logs -f
 ```
 
 **Show:**
@@ -55,8 +57,6 @@ docker compose -f docker/compose.yaml up -d
 - Services starting: kafka, mlflow, api, ingest, featurizer, prediction-consumer, prometheus, grafana
 - Wait 30-60 seconds for services to be healthy
 
-**Narration:**
-> "This one command starts 11 services: Kafka for streaming, MLflow for model tracking, our FastAPI prediction service, the full data pipeline including live Coinbase ingestion, feature computation, and monitoring with Prometheus and Grafana."
 
 ---
 
@@ -77,19 +77,16 @@ curl http://localhost:8000/version
 {"model_variant":"ml","version":"v1.2-random_forest","sha":"abc123"}
 ```
 
-**Narration:**
-> "The health endpoint confirms our API is running, the ML model is loaded, and Kafka is connected. The version endpoint shows we're using the Random Forest model."
-
 ---
 
 ### Part 3: Live Prediction (2 min)
 
 **Commands:**
 ```bash
-# Make a prediction
+# Make a prediction with actual features
 curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
-  -d '{"rows":[{"ret_mean":0.05,"ret_std":0.01,"n":50}]}'
+  -d '{"rows":[{"ret_mean":0.05,"ret_std":0.01,"n":50,"log_return_300s":0.001,"spread_mean_300s":0.5,"trade_intensity_300s":100,"order_book_imbalance_300s":0.6,"spread_mean_60s":0.3,"order_book_imbalance_60s":0.55,"price_velocity_300s":0.0001,"realized_volatility_300s":0.002,"order_book_imbalance_30s":0.52,"realized_volatility_60s":0.0015}]}'
 ```
 
 **Expected Output:**
@@ -107,10 +104,6 @@ curl -X POST http://localhost:8000/predict \
 2. Navigate to POST /predict
 3. Try interactive prediction with different inputs
 4. Show response format matches contract
-
-**Narration:**
-> "The API returns a volatility probability score between 0 and 1. A score of 0.74 indicates high likelihood of a volatility spike. The prediction includes the model variant, version, and timestamp for full traceability."
-
 ---
 
 ### Part 4: Monitoring Dashboards (1.5 min)
@@ -127,9 +120,6 @@ curl -X POST http://localhost:8000/predict \
 1. Navigate to "crypto-volatility-production" experiment
 2. Show PR-AUC metrics over time
 3. Point out production monitoring
-
-**Narration:**
-> "Grafana shows real-time performance: our p95 latency is around 50ms, well under our 800ms SLO target. We're processing live predictions with near-zero errors. MLflow tracks our production model performance with PR-AUC metrics logged every 10 minutes."
 
 ---
 
@@ -155,10 +145,6 @@ sleep 10
 # Verify pipeline recovered
 docker compose -f docker/compose.yaml logs --tail=20 featurizer
 ```
-
-**Narration:**
-> "Let's test fault tolerance. I'll stop Kafka to simulate a broker failure. Notice the API stays healthy and continues serving predictions. When we restart Kafka, our pipeline automatically reconnects within seconds. The featurizer logs show successful reconnection with no data loss."
-
 ---
 
 ### Part 6: Model Rollback (1 min)
@@ -169,7 +155,7 @@ docker compose -f docker/compose.yaml logs --tail=20 featurizer
 curl http://localhost:8000/version
 
 # Rollback to baseline model
-MODEL_VARIANT=baseline docker compose -f docker/compose.yaml up -d api
+MODEL_VARIANT=baseline docker compose -f docker/compose.yaml up -d --force-recreate api
 
 # Wait for restart (15 seconds)
 sleep 15
@@ -180,38 +166,12 @@ curl http://localhost:8000/version
 # Make prediction with baseline
 curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
-  -d '{"rows":[{"ret_mean":0.05,"ret_std":0.01,"n":50}]}'
+  -d '{"rows":[{"ret_mean":0.05,"ret_std":0.01,"n":50,"log_return_300s":0.001,"spread_mean_300s":0.5,"trade_intensity_300s":100,"order_book_imbalance_300s":0.6,"spread_mean_60s":0.3,"order_book_imbalance_60s":0.55,"price_velocity_300s":0.0001,"realized_volatility_300s":0.002,"order_book_imbalance_30s":0.52,"realized_volatility_60s":0.0015}]}'
 
 # Rollback to ML model
-MODEL_VARIANT=ml docker compose -f docker/compose.yaml up -d api
+MODEL_VARIANT=ml docker compose -f docker/compose.yaml up -d --force-recreate api
 ```
-
-**Expected Output:**
-```json
-// Before: {"model_variant":"ml",...}
-// After:  {"model_variant":"baseline",...}
-```
-
-**Narration:**
-> "For production safety, we can instantly rollback to a baseline statistical model if the ML model degrades. I'm setting MODEL_VARIANT to 'baseline' and restarting just the API service. The version endpoint confirms we've switched to the baseline z-score model. Predictions continue without downtime. Rolling back to the ML model is just as simple."
-
 ---
-
-### Part 7: Wrap-Up (0.5 min)
-
-**Commands:**
-```bash
-# Show all running services
-docker compose -f docker/compose.yaml ps
-```
-
-**Narration:**
-> "To summarize: we demonstrated one-command startup, live predictions with sub-100ms latency, real-time monitoring with Grafana and MLflow, automatic failure recovery when Kafka failed, and instant model rollback for production safety. The entire pipeline processes live cryptocurrency data end-to-end."
-
-**Final screen:** Show Grafana dashboard with live metrics
-
----
-
 ## Post-Demo Cleanup
 
 ```bash
@@ -221,87 +181,3 @@ docker compose -f docker/compose.yaml down
 
 ---
 
-## Recording Tips
-
-### Technical Setup
-1. **Screen Resolution:** 1920x1080 (Full HD) recommended
-2. **Recording Tool:**
-   - macOS: QuickTime Player (Cmd+Shift+5) or OBS Studio
-   - Windows: OBS Studio or built-in Xbox Game Bar
-3. **Audio:** Use a decent microphone, minimize background noise
-4. **Font Size:** Increase terminal font size (16-18pt) for readability
-
-### Presentation Tips
-1. **Speak Clearly:** Explain what you're doing, not just reading commands
-2. **Pause for Effect:** Give viewers time to see output before moving on
-3. **Highlight Key Points:**
-   - "Notice the latency is only 50ms..."
-   - "See how it automatically reconnected..."
-4. **Stay on Script:** Practice 2-3 times to stay within 8 minutes
-5. **Show Confidence:** This is your work - be proud of it!
-
-### What to Emphasize
-- ✅ **One-command startup** - shows good DevOps
-- ✅ **Real-time data pipeline** - streaming from live Coinbase
-- ✅ **Production-ready monitoring** - Grafana + MLflow
-- ✅ **Fault tolerance** - automatic reconnection
-- ✅ **Easy rollback** - environment variable toggle
-
-### Common Mistakes to Avoid
-- ❌ Don't spend too long on any one section
-- ❌ Don't show errors without explaining/fixing them
-- ❌ Don't read documentation - demonstrate features
-- ❌ Don't go over 8 minutes (practice to stay at 7:30)
-- ❌ Don't forget to explain what you're showing
-
----
-
-## Troubleshooting During Recording
-
-### If services don't start:
-- Wait 60 seconds (Kafka takes time)
-- Check `docker compose logs api` for errors
-- Verify Docker has enough resources (8GB RAM minimum)
-
-### If API doesn't respond:
-- Check health: `docker compose ps api`
-- Restart: `docker compose restart api`
-- Wait 30 seconds and retry
-
-### If Grafana doesn't load:
-- Default login: admin/admin123
-- Navigate to Dashboards → crypto-volatility-api
-- It may take 30-60 seconds for data to appear
-
----
-
-## Upload Instructions
-
-### YouTube (Unlisted)
-1. Go to https://studio.youtube.com
-2. Click "Create" → "Upload video"
-3. Set visibility to **"Unlisted"**
-4. Title: "Real-Time Crypto AI Service - Week 7 Demo"
-5. Description: "8-minute demonstration of cryptocurrency volatility detection system with live streaming, ML predictions, monitoring, and fault tolerance."
-6. Copy the link for submission
-
-### Loom (Alternative)
-1. Go to https://loom.com
-2. Record screen + audio
-3. Share and copy link
-
----
-
-## Final Checklist Before Recording
-
-- [ ] All services stopped and volumes cleaned (`docker compose down -v`)
-- [ ] Docker Desktop running with adequate resources
-- [ ] Browser tabs prepared
-- [ ] Terminal font size increased for readability
-- [ ] Microphone tested
-- [ ] Screen recording software ready
-- [ ] Script reviewed and practiced
-- [ ] Timer ready (aim for 7:30, max 8:00)
-- [ ] Quiet recording environment
-
-**Good luck! You've built an impressive system - now show it off!** 🚀
