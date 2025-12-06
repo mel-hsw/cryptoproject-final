@@ -10,7 +10,7 @@ import time
 import argparse
 import signal
 import threading
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 import websocket
 from kafka import KafkaProducer
@@ -220,8 +220,19 @@ class CoinbaseIngestor:
                 return
 
             # Enrich with metadata
+            # Use Coinbase's timestamp if available, otherwise fallback to current time
+            # IMPORTANT: Always use timezone-aware timestamps (UTC) to prevent mixing errors downstream
+            coinbase_time = ticker_data.get("time")
+            if coinbase_time:
+                # Use Coinbase's timestamp as source of truth
+                enriched_timestamp = coinbase_time
+            else:
+                # Fallback to current UTC time if Coinbase doesn't provide timestamp
+                # Use timezone-aware timestamp to prevent "Cannot mix tz-aware with tz-naive" errors
+                enriched_timestamp = datetime.now(tz=timezone.utc).isoformat()
+            
             enriched = {
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": enriched_timestamp,
                 "product_id": ticker_data.get("product_id"),
                 "price": ticker_data.get("price"),
                 "volume_24h": ticker_data.get("volume_24_h")

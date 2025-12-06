@@ -10,7 +10,7 @@
 ## Pre-Demo Setup (Before Recording)
 
 - [ ] Ensure Docker Desktop is running
-- [ ] All services and pipeline stopped (`./scripts/stop_pipeline.sh` or `.\scripts\stop_pipeline.ps1`)
+- [ ] All services stopped (`docker compose -f docker/compose.yaml down`)
 - [ ] Terminal windows ready
 - [ ] Browser tabs ready for:
   - http://localhost:8000/docs (API Swagger)
@@ -27,27 +27,20 @@
 **Narration:** "Let me show you how to start the entire end-to-end pipeline with a single command."
 
 ```bash
-# One-command startup (builds images, starts services, runs pipeline)
-./scripts/start_pipeline.sh
-```
-
-**Or on Windows:**
-```powershell
-.\scripts\start_pipeline.ps1
+# One-command startup (builds images, starts all services including pipeline)
+docker compose -f docker/compose.yaml up -d
 ```
 
 **Show:**
 - [ ] One-command startup
 - [ ] Docker images building (if first run)
 - [ ] All services starting (Kafka, Zookeeper, MLflow, API, Prometheus, Grafana)
-- [ ] Data ingestion starting (ws_ingest.py)
-- [ ] Feature pipeline starting (featurizer.py)
-- [ ] Prediction consumer starting (prediction_consumer.py)
+- [ ] Pipeline services starting (ingest, featurizer, prediction-consumer)
 - [ ] Health status becoming "healthy"
 
 **Key Points:**
 - "One command starts everything: Docker services + full pipeline"
-- "The script automatically builds images if needed"
+- "Docker Compose automatically builds images if needed"
 - "All components start in the correct order with dependencies"
 - "Live data streaming begins immediately from Coinbase"
 
@@ -58,9 +51,9 @@
 **Narration:** "Let me show you the end-to-end flow: live data streaming, feature computation, and automatic predictions."
 
 **Show:**
-- [ ] Check logs showing data ingestion: `tail -f logs/ingest_*.log`
-- [ ] Check logs showing feature computation: `tail -f logs/featurizer_*.log`
-- [ ] Check logs showing predictions: `tail -f logs/predictions_*.log`
+- [ ] Check logs showing data ingestion: `docker compose -f docker/compose.yaml logs -f ingest`
+- [ ] Check logs showing feature computation: `docker compose -f docker/compose.yaml logs -f featurizer`
+- [ ] Check logs showing predictions: `docker compose -f docker/compose.yaml logs -f prediction-consumer`
 - [ ] Show API endpoints:
   ```bash
   curl http://localhost:8000/health
@@ -171,20 +164,17 @@ docker compose -f docker/compose.yaml up -d api
 ## Post-Demo Commands
 
 ```bash
-# Show pipeline status
-ps aux | grep -E "(ws_ingest|featurizer|prediction_consumer)"
-
 # Show Docker services status
 docker compose -f docker/compose.yaml ps
+
+# Show logs for pipeline services
+docker compose -f docker/compose.yaml logs ingest featurizer prediction-consumer
 
 # Show load test results
 python scripts/load_test.py --requests 100
 
-# Stop pipeline
-./scripts/stop_pipeline.sh
-
-# Or on Windows
-.\scripts\stop_pipeline.ps1
+# Stop all services
+docker compose -f docker/compose.yaml down
 ```
 
 ---
@@ -218,15 +208,17 @@ docker compose -f docker/compose.yaml restart api
 
 ### If predictions fail or pipeline stops:
 ```bash
-# Check if pipeline processes are running
-ps aux | grep -E "(ws_ingest|featurizer|prediction_consumer)"
+# Check if pipeline services are running
+docker compose -f docker/compose.yaml ps ingest featurizer prediction-consumer
 
 # Check API health
 curl http://localhost:8000/health
 
-# Restart pipeline
-./scripts/stop_pipeline.sh
-./scripts/start_pipeline.sh
+# Check logs for errors
+docker compose -f docker/compose.yaml logs ingest featurizer prediction-consumer
+
+# Restart pipeline services
+docker compose -f docker/compose.yaml restart ingest featurizer prediction-consumer
 ```
 
 ---

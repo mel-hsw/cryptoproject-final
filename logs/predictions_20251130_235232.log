@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "/Users/mel/Downloads/Crypto-Project-FOAI_edited-mel/scripts/prediction_consumer.py", line 14, in <module>
-    import requests
-ModuleNotFoundError: No module named 'requests'

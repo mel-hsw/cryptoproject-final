@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "/Users/mel/Downloads/Crypto-Project-FOAI_edited-mel/scripts/ws_ingest.py", line 15, in <module>
-    import websocket
-ModuleNotFoundError: No module named 'websocket'

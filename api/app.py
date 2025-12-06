@@ -31,7 +31,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from models.infer import (  # noqa: E402
+from models.feature_preparation import (  # noqa: E402
     VolatilityPredictor,
     prepare_features_for_inference,
 )
@@ -491,7 +491,7 @@ async def predict(request: Request, predict_request: PredictRequest):
             },
         )
 
-        # Model expects these 10 features (from train.py prepare_features)
+        # Model expects these 10 features (MODEL_FEATURES from featurizer)
         expected_features = [
             "log_return_300s",
             "spread_mean_300s",
@@ -545,9 +545,9 @@ async def predict(request: Request, predict_request: PredictRequest):
             # Prepare features using same logic as training
             prepared_features = prepare_features_for_inference(features_df)
 
-            # Make prediction
-            result = predictor.predict(prepared_features)
-            all_scores.append(round(result["probability"], 4))
+        # Make prediction
+        result = predictor.predict(prepared_features)
+        all_scores.append(round(result["probability"], 4))
 
         inference_time = time.time() - start_time
 
@@ -560,8 +560,11 @@ async def predict(request: Request, predict_request: PredictRequest):
         # Update last prediction timestamp for freshness tracking
         last_prediction_timestamp.set(time.time())
 
+        # Use model's threshold instead of hardcoded 0.5
+        model_threshold = predictor.threshold if hasattr(predictor, 'threshold') else 0.05
+
         for score in all_scores:
-            prediction_label = "1" if score >= 0.5 else "0"
+            prediction_label = "1" if score >= model_threshold else "0"
             predictions_total.labels(
                 model_version=model_name, prediction=prediction_label
             ).inc()
@@ -649,7 +652,7 @@ async def predict_legacy(request: Request, feature_request: FeatureRequest):
         if "product_id" not in features_dict:
             features_dict["product_id"] = "BTC-USD"
 
-        # Model expects these 10 features (from train.py prepare_features)
+        # Model expects these 10 features (MODEL_FEATURES from featurizer)
         expected_features = [
             "log_return_300s",
             "spread_mean_300s",
@@ -752,6 +755,124 @@ async def metrics():
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
+@app.get("/metrics/live-performance")
+async def get_live_performance():
+    """
+    Get live precision/recall metrics from recent predictions.
+    
+    Calculates PR-AUC, precision, recall, and F1-score on recent predictions
+    (last hour by default) matched with labeled features.
+    
+    Returns:
+        JSON with live performance metrics including PR-AUC, precision, recall, F1-score,
+        confusion matrix, and sample counts.
+    """
+    try:
+        # Import monitoring functions (lazy import to avoid circular dependencies)
+        import sys
+        from pathlib import Path
+        
+        project_root = Path(__file__).parent.parent
+        if str(project_root) not in sys.path:
+            sys.path.insert(0, str(project_root))
+        
+        from scripts.monitor_pr_auc import (
+            load_predictions_from_kafka,
+            load_features_with_labels,
+            match_predictions_with_labels,
+            calculate_metrics,
+        )
+        
+        # Load recent data (last hour, 5 minute lookback buffer)
+        time_window_hours = 1
+        lookback_buffer_minutes = 5
+        
+        predictions_df = load_predictions_from_kafka(
+            time_window_hours=time_window_hours,
+            lookback_buffer_minutes=lookback_buffer_minutes
+        )
+        
+        if predictions_df is None or len(predictions_df) == 0:
+            # Try file-based fallback
+            from scripts.monitor_pr_auc import load_predictions_from_files
+            predictions_df = load_predictions_from_files(
+                time_window_hours=time_window_hours,
+                lookback_buffer_minutes=lookback_buffer_minutes
+            )
+        
+        if predictions_df is None or len(predictions_df) == 0:
+            return {
+                "status": "no_data",
+                "message": f"No predictions available in last {time_window_hours} hour(s)",
+                "time_window_hours": time_window_hours,
+                "lookback_buffer_minutes": lookback_buffer_minutes,
+            }
+        
+        features_df = load_features_with_labels()
+        if features_df is None or len(features_df) == 0:
+            return {
+                "status": "no_features",
+                "message": "No features with labels available",
+            }
+        
+        matched_df = match_predictions_with_labels(
+            predictions_df, 
+            features_df,
+            time_tolerance_seconds=30
+        )
+        
+        if matched_df is None or len(matched_df) == 0:
+            return {
+                "status": "no_matches",
+                "message": "Could not match predictions with labels (check timestamp alignment)",
+                "predictions_count": len(predictions_df),
+                "features_count": len(features_df),
+            }
+        
+        # Extract arrays for metrics calculation
+        y_true = matched_df["volatility_spike"].values.astype(int)
+        y_pred = matched_df["prediction"].values.astype(int)
+        y_proba = matched_df["score"].values.astype(float)
+        
+        # Calculate metrics
+        metrics = calculate_metrics(y_true, y_pred, y_proba)
+        
+        # Get model version from predictions
+        model_version = (
+            matched_df["model_version"].mode()[0] 
+            if "model_version" in matched_df.columns and len(matched_df["model_version"].mode()) > 0
+            else "production"
+        )
+        
+        return {
+            "status": "success",
+            "metrics": {
+                "pr_auc": metrics["pr_auc"],
+                "precision": metrics["precision"],
+                "recall": metrics["recall"],
+                "f1_score": metrics["f1_score"],
+                "true_positives": metrics["true_positives"],
+                "false_positives": metrics["false_positives"],
+                "true_negatives": metrics["true_negatives"],
+                "false_negatives": metrics["false_negatives"],
+            },
+            "sample_count": metrics["total_samples"],
+            "positive_samples": metrics["positive_samples"],
+            "negative_samples": metrics["negative_samples"],
+            "spike_rate": metrics["positive_samples"] / metrics["total_samples"] if metrics["total_samples"] > 0 else 0.0,
+            "model_version": model_version,
+            "time_window_hours": time_window_hours,
+            "lookback_buffer_minutes": lookback_buffer_minutes,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+    except Exception as e:
+        logger.error(f"Error calculating live performance metrics: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error calculating metrics: {str(e)}"
+        )
+
+
 @app.get("/")
 async def root():
     """Root endpoint with API information."""
@@ -765,6 +886,7 @@ async def root():
             "/predict/legacy": "Legacy prediction endpoint (POST)",
             "/version": "API version info (GET)",
             "/metrics": "Prometheus metrics (GET)",
+            "/metrics/live-performance": "Live precision/recall metrics (GET)",
             "/docs": "API documentation (Swagger)",
         },
         "example_request": {

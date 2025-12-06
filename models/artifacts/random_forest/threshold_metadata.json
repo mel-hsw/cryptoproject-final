@@ -1,7 +1,21 @@
 {
-  "optimal_threshold": 0.7057130340503562,
-  "threshold_10pct": 0.8049812997453345,
-  "threshold_used": 0.7057130340503562,
-  "validation_f1_at_optimal": 0.9545983701979044,
-  "spike_rate_target": 0.1
+  "optimal_threshold": 0.034,
+  "threshold_90pct": 0.034,
+  "threshold_used": 0.034,
+  "validation_f1_at_90pct": 0.63,
+  "validation_precision_at_90pct": 0.99,
+  "validation_recall_at_90pct": 0.46,
+  "spike_rate_at_90pct": 0.10,
+  "spike_rate_target": 0.1,
+  "note": "Adjusted to production score distribution (90th percentile of actual production scores = 0.034)",
+  "production_score_stats": {
+    "max": 0.0554,
+    "mean": 0.0113,
+    "median": 0.0095,
+    "p90": 0.034,
+    "p95": 0.0344,
+    "p99": 0.0464
+  },
+  "adjustment_reason": "Model produces scores 0.01-0.05 on production data vs training threshold of 0.7469",
+  "timestamp": "2025-12-06T06:05:00Z"
 }

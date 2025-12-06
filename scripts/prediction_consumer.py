@@ -11,26 +11,61 @@ import argparse
 import signal
 import threading
 from collections import deque
+from datetime import datetime, timezone
+from pathlib import Path
 import requests
-from kafka import KafkaConsumer
+from kafka import KafkaConsumer, KafkaProducer
 from kafka.errors import KafkaError
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
+
+def format_timestamp_iso8601() -> str:
+    """
+    Generate a standardized ISO 8601 timestamp string in UTC.
+    Format: YYYY-MM-DDTHH:MM:SS.ffffffZ (always includes microseconds and Z timezone)
+    This format is guaranteed to be parseable by pd.to_datetime().
+    
+    Returns:
+        ISO 8601 formatted timestamp string with UTC timezone indicator
+    """
+    return datetime.now(timezone.utc).isoformat(timespec='microseconds').replace('+00:00', 'Z')
+
 # Configuration
 KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 KAFKA_TOPIC_FEATURES = os.getenv("KAFKA_TOPIC_FEATURES", "ticks.features")
+KAFKA_TOPIC_PREDICTIONS = os.getenv("KAFKA_TOPIC_PREDICTIONS", "predictions.log")
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 PREDICT_ENDPOINT = f"{API_BASE_URL}/predict"
+LOG_PREDICTIONS = os.getenv("LOG_PREDICTIONS", "false").lower() == "true"
+PREDICTIONS_LOG_DIR = Path(os.getenv("PREDICTIONS_LOG_DIR", "logs/predictions"))
 
-# Setup logging
+# Setup logging first
 logging.basicConfig(
     level=os.getenv("LOG_LEVEL", "INFO"),
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+# Load model threshold from metadata (same as model uses)
+MODEL_THRESHOLD = 0.5  # Default fallback
+try:
+    threshold_metadata_path = Path(__file__).parent.parent / "models" / "artifacts" / "random_forest" / "threshold_metadata.json"
+    if threshold_metadata_path.exists():
+        import json
+        with open(threshold_metadata_path, "r") as f:
+            threshold_metadata = json.load(f)
+            MODEL_THRESHOLD = threshold_metadata.get(
+                "threshold_used",
+                threshold_metadata.get("optimal_threshold", 0.5)
+            )
+        logger.info(f"Loaded model threshold: {MODEL_THRESHOLD:.4f}")
+    else:
+        logger.warning(f"Threshold metadata not found at {threshold_metadata_path}, using default 0.5")
+except Exception as e:
+    logger.warning(f"Could not load threshold metadata: {e}, using default 0.5")
 
 # Import Kafka metrics for consumer lag tracking
 try:
@@ -88,6 +123,14 @@ class PredictionConsumer:
         # Use a deque without maxlen so we can manually prune old entries
         self.request_timestamps = deque()
 
+        # Prediction logging
+        self.log_predictions = LOG_PREDICTIONS
+        self.predictions_producer = None
+        self.predictions_log_file = None
+        
+        if self.log_predictions:
+            self._init_prediction_logging()
+
         # Consumer group for metrics
         self.consumer_group = "prediction-consumer"
 
@@ -105,6 +148,27 @@ class PredictionConsumer:
 
         # Initialize Kafka consumer
         self._init_kafka_consumer()
+
+    def _init_prediction_logging(self):
+        """Initialize prediction logging (Kafka topic or file)."""
+        try:
+            # Try to initialize Kafka producer for logging predictions
+            self.predictions_producer = KafkaProducer(
+                bootstrap_servers=self.bootstrap_servers,
+                value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+                acks=1,
+                retries=2,
+            )
+            logger.info(f"✓ Prediction logging enabled: Kafka topic {KAFKA_TOPIC_PREDICTIONS}")
+        except Exception as e:
+            logger.warning(f"Could not initialize Kafka producer for prediction logging: {e}")
+            logger.info("Falling back to file-based logging...")
+            
+            # Fallback: file-based logging
+            PREDICTIONS_LOG_DIR.mkdir(parents=True, exist_ok=True)
+            log_file = PREDICTIONS_LOG_DIR / f"predictions_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.ndjson"
+            self.predictions_log_file = open(log_file, "a")
+            logger.info(f"✓ Prediction logging enabled: File {log_file}")
 
     def _signal_handler(self, signum, frame):
         """Handle shutdown signals gracefully"""
@@ -180,7 +244,38 @@ class PredictionConsumer:
             else:
                 api_features[feat] = 0.0
 
+        # Preserve metadata needed downstream (timestamp used for matching/logging)
+        api_features["timestamp"] = feature_dict.get("timestamp")
+        api_features["product_id"] = feature_dict.get("product_id", "")
+        api_features["price"] = feature_dict.get("price")
+
         return api_features
+
+    def _log_prediction(self, features: dict, score: float, model_variant: str, 
+                       model_version: str, timestamp: str):
+        """Log prediction for comparison and analysis."""
+        prediction_log = {
+            "timestamp": timestamp,
+            "model_variant": model_variant,
+            "model_version": model_version,
+            "score": score,
+            "prediction": 1 if score >= MODEL_THRESHOLD else 0,  # Use model threshold (0.7057)
+            "features": features,  # Include features for later analysis
+        }
+        
+        try:
+            if self.predictions_producer:
+                # Log to Kafka topic
+                self.predictions_producer.send(
+                    KAFKA_TOPIC_PREDICTIONS,
+                    value=prediction_log
+                )
+            elif self.predictions_log_file:
+                # Log to file
+                self.predictions_log_file.write(json.dumps(prediction_log) + "\n")
+                self.predictions_log_file.flush()
+        except Exception as e:
+            logger.debug(f"Failed to log prediction: {e}")
 
     def _wait_for_rate_limit(self):
         """Wait if we're approaching rate limit"""
@@ -226,10 +321,54 @@ class PredictionConsumer:
             if response.status_code == 200:
                 result = response.json()
                 score = result.get("scores", [0])[0] if result.get("scores") else 0
+                model_variant = result.get("model_variant", "unknown")
+                model_version = result.get("version", "unknown")
+                
                 logger.debug(
                     f"Prediction successful: score={score:.4f}, "
-                    f"model={result.get('model_variant', 'unknown')}"
+                    f"model={model_variant}"
                 )
+                
+                # Log prediction for comparison and analysis
+                if self.log_predictions:
+                    # Use timestamp from features (which came from Coinbase) as source of truth
+                    feature_timestamp = features.get("timestamp")
+                    prediction_timestamp = None
+
+                    if feature_timestamp:
+                        try:
+                            # Normalize to UTC ISO8601 with Z suffix
+                            from datetime import datetime as dt
+
+                            if isinstance(feature_timestamp, str):
+                                try:
+                                    ts = dt.fromisoformat(feature_timestamp.replace('Z', '+00:00'))
+                                except ValueError:
+                                    import pandas as pd
+                                    ts = pd.to_datetime(feature_timestamp, utc=True)
+                                prediction_timestamp = ts.isoformat().replace('+00:00', 'Z')
+                            else:
+                                prediction_timestamp = str(feature_timestamp)
+                        except Exception as e:
+                            logger.warning(
+                                f"Prediction log: could not parse feature timestamp '{feature_timestamp}': {e}; using current UTC time"
+                            )
+                            prediction_timestamp = format_timestamp_iso8601()
+                    else:
+                        logger.warning("Prediction log: missing feature timestamp; using current UTC time")
+                        prediction_timestamp = format_timestamp_iso8601()
+
+                    if not prediction_timestamp:
+                        prediction_timestamp = format_timestamp_iso8601()
+                    
+                    self._log_prediction(
+                        features=features,
+                        score=score,
+                        model_variant=model_variant,
+                        model_version=model_version,
+                        timestamp=prediction_timestamp,
+                    )
+                
                 return True
             elif response.status_code == 429:
                 # Rate limit exceeded - wait longer
@@ -383,6 +522,20 @@ class PredictionConsumer:
                 self.consumer.close()
             except Exception as e:
                 logger.warning(f"Error closing consumer: {e}")
+        
+        # Close prediction logging
+        if self.predictions_producer:
+            try:
+                self.predictions_producer.flush(timeout=5)
+                self.predictions_producer.close(timeout=5)
+            except Exception as e:
+                logger.warning(f"Error closing predictions producer: {e}")
+        
+        if self.predictions_log_file:
+            try:
+                self.predictions_log_file.close()
+            except Exception as e:
+                logger.warning(f"Error closing predictions log file: {e}")
 
         elapsed = time.time() - self.start_time
         logger.info("=" * 50)
@@ -396,6 +549,9 @@ class PredictionConsumer:
 
 
 def main():
+    # Read rate limit from environment variable if available
+    default_rate_limit = int(os.getenv("MAX_REQUESTS_PER_MINUTE", "120"))
+    
     parser = argparse.ArgumentParser(
         description="Consume features from Kafka and call /predict API automatically"
     )
@@ -417,8 +573,8 @@ def main():
     parser.add_argument(
         "--max-requests-per-minute",
         type=int,
-        default=120,
-        help="Maximum requests per minute (default: 120 = 2/second, recommended: 60-120/minute)",
+        default=default_rate_limit,
+        help=f"Maximum requests per minute (default: {default_rate_limit} = {default_rate_limit/60:.1f}/second, can be set via MAX_REQUESTS_PER_MINUTE env var)",
     )
 
     args = parser.parse_args()

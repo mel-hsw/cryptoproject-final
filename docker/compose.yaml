@@ -1,37 +1,52 @@
-# Default compose file - uses Zookeeper mode (stable, well-tested)
-# For KRaft mode, use: docker compose -f compose-kraft.yaml up -d
-#
+# Default compose file - uses KRaft mode (Kafka without Zookeeper)
+# Usage: docker compose -f docker/compose.yaml up -d
 # Configuration:
 #   Copy ../.env.example to ../.env and customize values
 #   Or set environment variables directly before running docker compose
+#
+# Architecture:
+#   Coinbase WS → ingest → Kafka (ticks.raw) → featurizer → Kafka (ticks.features) →
+#   prediction-consumer → API /predict → Prometheus → Grafana
+#   pr-auc-monitor → MLflow (tracks PR-AUC over time)
+#
+# Services:
+#   - Infrastructure: kafka, mlflow
+#   - API: api (FastAPI service)
+#   - Pipeline: ingest, featurizer, prediction-consumer
+#   - Monitoring: prometheus, grafana, pr-auc-monitor
+#   - Init: kafka-init (one-time topic creation)
 
 services:
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
-    container_name: zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - "2182:2181"
-    networks:
-      - crypto-network
-
+  # Kafka broker (KRaft mode - no Zookeeper needed)
+  # Provides event streaming platform for the pipeline
+  # Topics: ticks.raw (raw ticker data), ticks.features (computed features)
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: kafka
-    depends_on:
-      - zookeeper
     ports:
-      - "9092:9092"
+      - "9092:9092"  # PLAINTEXT_HOST listener (external access)
+      - "9093:9093"  # Controller port for KRaft
+      - "29092:29092"  # PLAINTEXT listener (internal Docker network)
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # KRaft mode configuration
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093,PLAINTEXT_HOST://0.0.0.0:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      # Kafka settings
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      # Cluster ID required for KRaft mode (Confluent image)
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    volumes:
+      - kafka-data:/var/lib/kafka/data
     networks:
       - crypto-network
     healthcheck:
@@ -39,7 +54,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s  # Give Kafka more time to start
 
+  # MLflow Tracking Server
+  # Used for experiment tracking during model training
+  # Models are served from filesystem (not directly from MLflow)
+  # Access UI at http://localhost:5001
   mlflow:
     image: ghcr.io/mlflow/mlflow:v2.10.2
     container_name: mlflow-server
@@ -47,6 +67,7 @@ services:
       - "5001:5000"
     volumes:
       # Mount local directory for MLflow data and artifacts
+      # Persists experiment data across container restarts
       - ./mlflow_data:/mlflow
     command: >
       mlflow server
@@ -58,9 +79,11 @@ services:
       --serve-artifacts
     networks:
       - crypto-network
-    # Healthcheck removed - MLflow doesn't need curl/wget for healthcheck
-    # The service will start and be available, healthcheck is optional
 
+  # FastAPI Service - Volatility Prediction API
+  # Endpoints: POST /predict, GET /health, GET /version, GET /metrics
+  # Loads models from filesystem at startup (not from MLflow)
+  # Exposes Prometheus metrics for monitoring
   api:
     build:
       context: ..
@@ -72,19 +95,23 @@ services:
       # Model variant toggle: "ml" for trained model, "baseline" for z-score fallback
       # Change to "baseline" for rollback: MODEL_VARIANT=baseline
       - MODEL_VARIANT=${MODEL_VARIANT:-ml}
+      # Model version: random_forest, logistic_regression, etc.
       - MODEL_VERSION=${MODEL_VERSION:-random_forest}
+      # Model paths (loaded from filesystem, not MLflow)
       - MODEL_PATH=/app/models/artifacts/${MODEL_VERSION:-random_forest}/model.pkl
       - BASELINE_MODEL_PATH=/app/models/artifacts/baseline/model.pkl
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - GIT_SHA=${GIT_SHA:-dev}
     volumes:
+      # Read-only mount: models loaded at startup
       - ../models:/app/models:ro
+      # Read-only mount: data access for reference (if needed)
       - ../data:/app/data:ro
     depends_on:
       kafka:
         condition: service_healthy
       mlflow:
-        condition: service_started  # Changed from service_healthy - MLflow healthcheck is optional
+        condition: service_started
     networks:
       - crypto-network
     healthcheck:
@@ -93,14 +120,181 @@ services:
       timeout: 5s
       retries: 5
 
+  # Kafka Topic Initialization Service
+  # One-time service that creates required Kafka topics
+  # Runs once and exits (restart: "no")
+  # Other services depend on this completing successfully
+  kafka-init:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - crypto-network
+    entrypoint: ['/bin/sh', '-c']
+    command: |
+      "
+      echo 'Waiting for Kafka to be ready...'
+      sleep 15
+      kafka-topics --create --if-not-exists --topic ticks.raw --bootstrap-server kafka:29092 --partitions 3 --replication-factor 1 || true
+      kafka-topics --create --if-not-exists --topic ticks.features --bootstrap-server kafka:29092 --partitions 3 --replication-factor 1 || true
+      kafka-topics --create --if-not-exists --topic predictions.log --bootstrap-server kafka:29092 --partitions 1 --replication-factor 1 || true
+      echo 'Kafka topics initialized'
+      "
+    restart: "no"
+
+  # WebSocket Ingestion Service
+  # Connects to Coinbase Advanced Trade WebSocket
+  # Streams real-time ticker data to Kafka ticks.raw topic
+  # Optionally saves raw data to data/raw/ (persisted via volume)
+  ingest:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ingestor
+    container_name: crypto-ingest
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - KAFKA_TOPIC_RAW=ticks.raw
+      - COINBASE_WS_URL=${COINBASE_WS_URL:-wss://advanced-trade-ws.coinbase.com}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ../data/raw:/app/data/raw  # For --save-disk option
+    depends_on:
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    networks:
+      - crypto-network
+    restart: unless-stopped
+    command: ["python", "scripts/ws_ingest.py", "--pair", "BTC-USD", "--save-disk"]
+
+  # Feature Engineering Service
+  # Consumes raw ticks from Kafka ticks.raw topic
+  # Computes windowed features (30s, 60s, 300s windows)
+  # Publishes features to Kafka ticks.features topic
+  # Saves processed features to data/processed/ (persisted via volume)
+  featurizer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ingestor
+    container_name: crypto-featurizer
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - FEATURIZER_METRICS_PORT=8001
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ../data/processed:/app/data/processed
+    depends_on:
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      ingest:
+        condition: service_started
+    networks:
+      - crypto-network
+    restart: unless-stopped
+    command: >
+      python scripts/featurizer.py
+      --topic_in ticks.raw
+      --topic_out ticks.features
+      --bootstrap_servers kafka:29092
+      --output_file data/processed/features_live.parquet
+      --windows 30 60 300
+      --add-labels
+
+  # Prediction Consumer Service
+  # Consumes features from Kafka ticks.features topic
+  # Formats features according to API contract
+  # Automatically calls /predict API endpoint
+  # Rate-limited to prevent API overload (120 requests/minute default)
+  prediction-consumer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ingestor
+    container_name: crypto-prediction-consumer
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - KAFKA_TOPIC_FEATURES=ticks.features
+      - KAFKA_TOPIC_PREDICTIONS=predictions.log
+      - API_BASE_URL=http://api:8000
+      - PREDICTION_CONSUMER_METRICS_PORT=8002
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_PREDICTIONS=${LOG_PREDICTIONS:-true}
+      - PREDICTIONS_LOG_DIR=/app/logs/predictions
+      - MAX_REQUESTS_PER_MINUTE=${MAX_REQUESTS_PER_MINUTE:-600}  # 10/second for replay tests
+    depends_on:
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      api:
+        condition: service_healthy
+      featurizer:
+        condition: service_started
+    volumes:
+      - ../models:/app/models:ro  # Access to model threshold metadata
+      - ../logs/predictions:/app/logs/predictions  # Prediction logs for comparison
+    networks:
+      - crypto-network
+    restart: unless-stopped
+    command: ["python", "scripts/prediction_consumer.py"]
+
+  # PR-AUC Monitoring Service
+  # Continuously monitors model performance by calculating PR-AUC on live predictions
+  # Compares predictions with labels from featurizer
+  # Logs metrics to MLflow every 10 minutes for time-series visualization
+  # Access charts at http://localhost:5001
+  pr-auc-monitor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ingestor
+    container_name: crypto-pr-auc-monitor
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - KAFKA_TOPIC_PREDICTIONS=predictions.log
+      - PREDICTIONS_LOG_DIR=/app/logs/predictions
+      - FEATURES_LIVE_PATH=/app/data/processed/features_live.parquet
+      - PR_AUC_UPDATE_INTERVAL=60  # 1 minute
+      - PR_AUC_TIME_WINDOW=0.5  # Last 0.5 hours (30 minutes)
+      - PR_AUC_LOOKBACK_BUFFER=5  # Exclude last 5 minutes to ensure labels are available
+      - KAFKA_CONSUMER_TIMEOUT_MS=30000  # 30 seconds (sufficient for recent data)
+      - KAFKA_MAX_MESSAGES=50000  # Max messages to read per cycle
+      - MLFLOW_EXPERIMENT=crypto-volatility-production
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ../models:/app/models:ro  # Access to model threshold metadata (if needed)
+      - ../data/processed:/app/data/processed  # Access to features_live.parquet
+      - ../logs/predictions:/app/logs/predictions  # Access to prediction logs
+    depends_on:
+      mlflow:
+        condition: service_started
+      featurizer:
+        condition: service_started
+      prediction-consumer:
+        condition: service_started
+    networks:
+      - crypto-network
+    restart: unless-stopped
+    command: ["python", "scripts/monitor_pr_auc.py"]
+
+  # Prometheus Metrics Database
+  # Scrapes metrics from API /metrics endpoint
+  # Stores time-series metrics for monitoring
+  # Access UI at http://localhost:9090
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
     ports:
       - "9090:9090"
     volumes:
+      # Prometheus configuration (scraping targets, alert rules)
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      # Persists metrics data across container restarts
       - prometheus-data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -119,6 +313,10 @@ services:
       retries: 3
       start_period: 10s
 
+  # Grafana Dashboards
+  # Visualizes Prometheus metrics with real-time dashboards
+  # Pre-configured dashboards for latency, error rate, predictions
+  # Access UI at http://localhost:3000 (admin/admin123)
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -164,6 +362,6 @@ volumes:
   prometheus-data:
   grafana-data:
 
-# Note: Kafka is now running in KRaft mode (no Zookeeper needed)
+# Note: Kafka is running in KRaft mode (no Zookeeper needed)
 # MLflow data is stored in ./mlflow_data (bind mount)
 # API service loads models from ../models (read-only mount)

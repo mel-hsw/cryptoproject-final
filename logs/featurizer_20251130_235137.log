@@ -1,4 +1,0 @@
-  File "/Users/mel/Downloads/Crypto-Project-FOAI_edited-mel/features/featurizer.py", line 826
-    self.producer.send(self.output_topic, value=features)
-    ^^^^
-IndentationError: expected an indented block after 'try' statement on line 825

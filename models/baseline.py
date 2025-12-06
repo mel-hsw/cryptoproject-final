@@ -3,7 +3,7 @@ Baseline volatility detection model using rule-based approach.
 This serves as the benchmark for ML models.
 
 Updated to compute a composite volatility score from the same spread of
-features used by train.py. The composite score is the mean of per-feature
+features used by the ML model. The composite score is the mean of per-feature
 z-scores (standardized using training data), and the z-score of that
 composite is used for thresholding.
 """
@@ -18,6 +18,9 @@ from sklearn.metrics import (
     confusion_matrix,
 )
 
+# Import MODEL_FEATURES from consolidated feature_preparation module
+from models.feature_preparation import BASELINE_FEATURES
+
 
 class BaselineVolatilityDetector:
     """
@@ -25,18 +28,7 @@ class BaselineVolatilityDetector:
     Uses a composite z-score across a set of volatility-related features.
     """
 
-    DEFAULT_FEATURES = [
-        "log_return_300s",
-        "spread_mean_300s",
-        "trade_intensity_300s",
-        "order_book_imbalance_300s",
-        "spread_mean_60s",
-        "order_book_imbalance_60s",
-        "price_velocity_300s",
-        "realized_volatility_300s",
-        "order_book_imbalance_30s",
-        "realized_volatility_60s",
-    ]
+    DEFAULT_FEATURES = BASELINE_FEATURES
 
     def __init__(
         self, threshold: float = 2.0, feature_cols: List[str] = None, eps: float = 1e-8

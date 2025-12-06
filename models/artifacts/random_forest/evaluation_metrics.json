@@ -1,0 +1,27 @@
+{
+  "validation": {
+    "precision": 0.9744897959183674,
+    "recall": 0.9744897959183674,
+    "f1_score": 0.9744897959183674,
+    "roc_auc": 0.9996666280148423,
+    "pr_auc": 0.9973878932689297,
+    "true_positives": 191,
+    "false_positives": 5,
+    "true_negatives": 1755,
+    "false_negatives": 5,
+    "threshold": 0.7469206961951291
+  },
+  "test": {
+    "precision": 0.9845360824742269,
+    "recall": 0.9744897959183674,
+    "f1_score": 0.9794871794871796,
+    "roc_auc": 0.999550672541744,
+    "pr_auc": 0.9954503942754281,
+    "true_positives": 191,
+    "false_positives": 3,
+    "true_negatives": 1757,
+    "false_negatives": 5,
+    "threshold": 0.7469206961951291
+  },
+  "training_timestamp": "2025-12-06T05:13:51.362915"
+}

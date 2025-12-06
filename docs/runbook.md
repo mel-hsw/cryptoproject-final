@@ -15,35 +15,49 @@
 ### Quick Start
 
 ```bash
-# Start complete pipeline (handles Docker + Python processes)
-./scripts/start_pipeline.sh
+# Start complete pipeline (all services in Docker)
+docker compose -f docker/compose.yaml up -d
 
 # Stop pipeline
-./scripts/stop_pipeline.sh
+docker compose -f docker/compose.yaml down
 ```
 
 **What it does:**
-- Checks/starts Docker services (`docker compose -f docker/compose.yaml up -d`)
-- Creates Kafka topics (`ticks.raw`, `ticks.features` - 3 partitions each)
-- Starts 3 Python processes:
-  1. `ws_ingest.py` - Coinbase WebSocket → Kafka
-  2. `featurizer.py` - Raw ticks → Features → Kafka
-  3. `prediction_consumer.py` - Features → `/predict` API
+- Builds Docker images (if needed)
+- Starts all Docker services:
+  - Infrastructure: Kafka (KRaft mode), MLflow
+  - API: FastAPI service (exposes /predict, /health, /version, /metrics)
+  - Pipeline: ingest (WebSocket), featurizer, prediction-consumer
+  - Monitoring: Prometheus, Grafana
+- Creates Kafka topics automatically (`ticks.raw`, `ticks.features` - 3 partitions each)
+- All pipeline components run as Docker containers
 
-**Flow:** `Coinbase → Kafka (ticks.raw) → Features → Kafka (ticks.features) → /predict API → Metrics`
+**Live Pipeline Flow:**
+```
+Coinbase WebSocket → ingest → Kafka (ticks.raw) → 
+featurizer → Kafka (ticks.features) → 
+prediction-consumer → API /predict → Prometheus → Grafana
+```
+
+**Data Persistence:**
+- Raw data: `data/raw/` (persisted via volume mount)
+- Processed features: `data/processed/` (persisted via volume mount)
+- Kafka messages: Docker volume `kafka-data`
+- Prometheus metrics: Docker volume `prometheus-data`
+- Grafana configs: Docker volume `grafana-data`
 
 ### Manual Setup
 
 ```bash
-# 1. Python environment
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-
-# 2. Start Docker services
+# 1. Start all Docker services
 docker compose -f docker/compose.yaml up -d
+
+# 2. Wait for services to be ready (about 30 seconds)
+sleep 30
 
 # 3. Verify services ready
 curl http://localhost:8000/health
+docker compose -f docker/compose.yaml ps  # Check all services are running
 ```
 
 ---
@@ -67,9 +81,44 @@ docker exec kafka kafka-topics --list --bootstrap-server localhost:9092  # Kafka
 ```
 
 **Monitoring:**
-- Grafana: http://localhost:3000 (admin/admin)
-- Prometheus: http://localhost:9090
-- API Metrics: http://localhost:8000/metrics
+- Grafana: http://localhost:3000 (admin/admin123) - Real-time dashboards
+- Prometheus: http://localhost:9090 - Metrics queries
+- API Metrics: http://localhost:8000/metrics - Prometheus format
+- MLflow: http://localhost:5001 - Experiment tracking UI
+
+**Verify Live Pipeline:**
+```bash
+# 1. Check all services are running
+docker compose -f docker/compose.yaml ps
+
+# 2. Check API health
+curl http://localhost:8000/health
+# Expected: {"status": "healthy", "model_loaded": true, "kafka_connected": true}
+
+# 3. Check API version (shows current model)
+curl http://localhost:8000/version
+# Expected: {"model": "random_forest_v1", "model_variant": "ml", ...}
+
+# 4. Check Kafka topics exist
+docker exec kafka kafka-topics --list --bootstrap-server localhost:9092
+# Expected: ticks.raw, ticks.features
+
+# 5. Check pipeline is processing data
+docker logs crypto-ingest | tail -20  # Should show WebSocket messages
+docker logs crypto-featurizer | tail -20  # Should show feature computation
+docker logs crypto-prediction-consumer | tail -20  # Should show API calls
+
+# 6. Check metrics are being collected
+curl http://localhost:8000/metrics | grep predictions_total
+# Should show increasing counter values
+
+# 7. View Grafana dashboards
+# Open http://localhost:3000 and check:
+# - Latency metrics (p50, p95)
+# - Prediction rate
+# - Error rate
+# - Consumer lag (if configured)
+```
 
 ---
 
@@ -97,11 +146,10 @@ docker compose -f docker/compose.yaml ps kafka
 # Test connectivity
 docker exec kafka kafka-topics --list --bootstrap-server localhost:9092
 
-# Fix: Restart Kafka + API + pipeline
+# Fix: Restart Kafka + API + pipeline services
 docker compose -f docker/compose.yaml restart kafka
 sleep 20
-docker compose -f docker/compose.yaml restart api
-./scripts/start_pipeline.sh  # Pipeline processes auto-reconnect
+docker compose -f docker/compose.yaml restart api ingest featurizer prediction-consumer
 ```
 
 ### High Latency (p95 > 800ms)
@@ -139,15 +187,16 @@ docker compose -f docker/compose.yaml restart prometheus
 ```bash
 # Stop everything
 docker compose -f docker/compose.yaml down
-./scripts/stop_pipeline.sh
 
 # Start fresh
 docker compose -f docker/compose.yaml up -d
+
+# Wait for services to be ready
 sleep 30
-./scripts/start_pipeline.sh
 
 # Verify
 curl http://localhost:8000/health
+docker compose -f docker/compose.yaml ps  # Check all services
 ```
 
 ### Service Recovery
@@ -160,21 +209,40 @@ docker logs -f volatility-api
 # Kafka only
 docker compose -f docker/compose.yaml restart kafka
 sleep 20
-docker compose -f docker/compose.yaml restart api
-./scripts/start_pipeline.sh  # Restart pipeline processes
+docker compose -f docker/compose.yaml restart api ingest featurizer prediction-consumer
 ```
 
 ### Model Rollback
 
+**Understanding Model Loading:**
+- Models are loaded from filesystem (`models/artifacts/`) at API startup
+- MLflow is used for experiment tracking, not runtime model loading
+- Model selection via environment variables: `MODEL_VARIANT` and `MODEL_VERSION`
+
+**Rollback to Baseline Model:**
 ```bash
-# Switch to baseline model
+# Switch to baseline model (z-score fallback)
 MODEL_VARIANT=baseline docker compose -f docker/compose.yaml up -d api
 sleep 10
 curl http://localhost:8000/version  # Verify "model_variant": "baseline"
-
-# Switch back to ML model
-MODEL_VARIANT=ml docker compose -f docker/compose.yaml up -d api
 ```
+
+**Switch to Different ML Model:**
+```bash
+# Use random_forest model (default)
+MODEL_VARIANT=ml MODEL_VERSION=random_forest docker compose -f docker/compose.yaml up -d api
+
+# Use logistic_regression model
+MODEL_VARIANT=ml MODEL_VERSION=logistic_regression docker compose -f docker/compose.yaml up -d api
+```
+
+**Verify Model Change:**
+```bash
+curl http://localhost:8000/version
+# Response includes: model_variant, model_path, version
+```
+
+**Note:** Model changes require API restart. The prediction-consumer will automatically reconnect and resume processing.
 
 ---
 
@@ -204,12 +272,12 @@ sleep 20
 # 3. Verify Kafka is healthy
 docker exec kafka kafka-broker-api-versions --bootstrap-server localhost:9092
 
-# 4. Restart API (to reconnect)
-docker compose -f docker/compose.yaml restart api
+# 4. Restart API and pipeline services (to reconnect)
+docker compose -f docker/compose.yaml restart api ingest featurizer prediction-consumer
 
-# 5. Pipeline processes auto-reconnect (check logs)
-tail -f logs/featurizer_*.log
-tail -f logs/predictions_*.log
+# 5. Check logs to verify reconnection
+docker compose -f docker/compose.yaml logs -f featurizer
+docker compose -f docker/compose.yaml logs -f prediction-consumer
 
 # 6. Verify recovery
 curl http://localhost:8000/health  # Should show kafka_connected: true
@@ -217,7 +285,7 @@ curl http://localhost:8000/health  # Should show kafka_connected: true
 ```
 
 **Expected behavior:**
-- Pipeline processes have exponential backoff retry logic
+- Pipeline services have exponential backoff retry logic
 - They will automatically reconnect when Kafka is available
 - No data loss (Kafka retains messages)
 - Consumer lag will catch up once reconnected
@@ -318,5 +386,88 @@ kafka_consumer_lag
 
 ---
 
+## Live Pipeline Monitoring
+
+### Key Metrics to Monitor
+
+**API Metrics (from `/metrics` endpoint):**
+- `predictions_total` - Total number of predictions made
+- `prediction_latency_seconds` - Prediction latency histogram
+- `http_requests_total` - HTTP request counts by status
+- `model_loaded` - Whether model is loaded (1) or not (0)
+- `last_prediction_timestamp` - Unix timestamp of last prediction
+
+**Pipeline Health:**
+- Consumer lag (if Kafka metrics enabled)
+- Feature computation rate
+- Prediction rate (should match feature arrival rate)
+- Error rates in each component
+
+### Monitoring Commands
+
+```bash
+# Check prediction rate
+curl -s http://localhost:8000/metrics | grep predictions_total
+
+# Check latency
+curl -s http://localhost:8000/metrics | grep prediction_latency_seconds
+
+# Check API health
+watch -n 5 'curl -s http://localhost:8000/health | jq'
+
+# Monitor logs in real-time
+docker compose -f docker/compose.yaml logs -f prediction-consumer
+
+# Check Kafka consumer lag (if metrics enabled)
+# View in Grafana dashboard or check Prometheus
+```
+
+### Troubleshooting Live Pipeline
+
+**No Predictions Being Made:**
+```bash
+# 1. Check if ingest is receiving data
+docker logs crypto-ingest | tail -50
+# Should see WebSocket messages being received
+
+# 2. Check if featurizer is processing
+docker logs crypto-featurizer | tail -50
+# Should see feature computation logs
+
+# 3. Check if prediction-consumer is consuming
+docker logs crypto-prediction-consumer | tail -50
+# Should see API calls being made
+
+# 4. Check Kafka topics have messages
+docker exec kafka kafka-console-consumer --bootstrap-server localhost:9092 \
+  --topic ticks.raw --from-beginning --max-messages 5
+docker exec kafka kafka-console-consumer --bootstrap-server localhost:9092 \
+  --topic ticks.features --from-beginning --max-messages 5
+```
+
+**High Latency:**
+```bash
+# Check API resources
+docker stats volatility-api
+
+# Check for errors
+docker logs volatility-api | grep -i error
+
+# Check prediction latency metrics
+curl -s http://localhost:8000/metrics | grep prediction_latency_seconds
+```
+
+**Pipeline Not Processing:**
+```bash
+# Restart entire pipeline
+docker compose -f docker/compose.yaml restart ingest featurizer prediction-consumer
+
+# Check service dependencies
+docker compose -f docker/compose.yaml ps
+# Ensure kafka-init completed successfully
+```
+
+---
+
 **Last Updated:** November 2025  
-**Version:** 2.0
+**Version:** 2.1

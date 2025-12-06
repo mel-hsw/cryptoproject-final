@@ -1,7 +1,6 @@
 # Model Selection Rationale
 
 **Date:** November 25, 2025  
-**Author:** Melissa Wong  
 **Project:** Real-Time Cryptocurrency Volatility Detection
 
 ---
@@ -137,8 +136,7 @@ After comprehensive experimentation with multiple model architectures, feature s
 - `random_state`: 42
 
 **Threshold Optimization:**
-- **Optimal F1 Threshold:** 0.7057 (maximizes F1-score on validation set)
-- **Alternative Threshold (10% spike rate):** 0.8050 (for reference)
+- **Threshold (10% spike rate):** 0.8050 (for reference)
 - Threshold saved to `models/artifacts/random_forest/threshold_metadata.json`
 
 **Strengths:**

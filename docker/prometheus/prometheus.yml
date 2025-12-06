@@ -19,27 +19,24 @@ scrape_configs:
     metrics_path: '/metrics'
     scrape_interval: 5s
 
-  - job_name: 'feature-pipeline'
-    static_configs:
-      - targets: ['host.docker.internal:8001']
-        labels:
-          service: 'feature-pipeline'
-          job: 'consumer'
-    metrics_path: '/metrics'
-    scrape_interval: 10s
-    # Note: This scrapes from host machine where featurizer.py runs
-    # If running in Docker, adjust target accordingly
+  # Disabled: These services don't expose metrics endpoints
+  # - job_name: 'feature-pipeline'
+  #   static_configs:
+  #     - targets: ['featurizer:8001']
+  #       labels:
+  #         service: 'feature-pipeline'
+  #         job: 'consumer'
+  #   metrics_path: '/metrics'
+  #   scrape_interval: 10s
 
-  - job_name: 'prediction-consumer'
-    static_configs:
-      - targets: ['host.docker.internal:8002']
-        labels:
-          service: 'prediction-consumer'
-          job: 'consumer'
-    metrics_path: '/metrics'
-    scrape_interval: 10s
-    # Note: This scrapes from host machine where prediction_consumer.py runs
-    # If running in Docker, adjust target accordingly
+  # - job_name: 'prediction-consumer'
+  #   static_configs:
+  #     - targets: ['prediction-consumer:8002']
+  #       labels:
+  #         service: 'prediction-consumer'
+  #         job: 'consumer'
+  #   metrics_path: '/metrics'
+  #   scrape_interval: 10s
 
   - job_name: 'prometheus'
     static_configs:
