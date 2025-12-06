@@ -3,7 +3,7 @@
 Real-time cryptocurrency volatility detection service that streams Coinbase data, computes features, and makes ML predictions via FastAPI.
 
 Name: Asli Gulcur, Melissa Wong
-
+Demo video: 
 ---
 
 # Quickstart

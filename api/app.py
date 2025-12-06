@@ -173,9 +173,9 @@ class FeatureRow(BaseModel):
     """Single row of features for prediction."""
 
     # Assignment-compatible feature names (simple)
-    ret_mean: Optional[float] = Field(None, description="Return mean")
-    ret_std: Optional[float] = Field(None, description="Return standard deviation")
-    n: Optional[int] = Field(None, description="Sample count")
+    ret_mean: float = Field(..., description="Return mean")
+    ret_std: float = Field(..., description="Return standard deviation")
+    n: int = Field(..., description="Sample count")
 
     # Full feature names (internal model features)
     log_return_300s: Optional[float] = Field(None, description="Log return over 300s")
@@ -512,6 +512,15 @@ async def predict(request: Request, predict_request: PredictRequest):
             "n": "trade_intensity_300s",
         }
 
+        # Handle empty rows
+        if not predict_request.rows:
+            return PredictResponse(
+                scores=[],
+                model_variant=MODEL_VARIANT,
+                version=f"v1.2-{MODEL_VARIANT if MODEL_VARIANT == 'baseline' else MODEL_VERSION}",
+                ts=datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            )
+
         # Process each row
         all_scores = []
         start_time = time.time()
@@ -545,9 +554,9 @@ async def predict(request: Request, predict_request: PredictRequest):
             # Prepare features using same logic as training
             prepared_features = prepare_features_for_inference(features_df)
 
-        # Make prediction
-        result = predictor.predict(prepared_features)
-        all_scores.append(round(result["probability"], 4))
+            # Make prediction
+            result = predictor.predict(prepared_features)
+            all_scores.append(round(result["probability"], 4))
 
         inference_time = time.time() - start_time
 
