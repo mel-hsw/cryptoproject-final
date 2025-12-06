@@ -337,6 +337,10 @@ services:
       - GF_DATABASE_CONN_MAX_LIFETIME=14400
       # Disable strict provisioning validation (allows Grafana to start even if datasource fails)
       - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_SERVER_DOMAIN=localhost
+      - GF_SERVER_SERVE_FROM_SUB_PATH=false
+      - GF_LOG_MODE=console
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro

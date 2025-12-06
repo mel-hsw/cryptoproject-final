@@ -10,13 +10,13 @@ Demo video:
 
 ## macOS/Linux 
 ```bash
-git clone <repository-url> && cd cryptoproject-final
+git clone https://github.com/mel-hsw/cryptoproject-final && cd cryptoproject-final-main
 docker compose -f docker/compose.yaml up -d
 ```
 
 ## Windows (PowerShell)
 ```powershell
-git clone <repository-url>; cd cryptoproject-final
+git clone https://github.com/mel-hsw/cryptoproject-final; cd cryptoproject-final-main
 docker compose -f docker/compose.yaml up -d
 ```
 
@@ -200,8 +200,8 @@ prometheus (health check) → grafana (depends on)
 
 ```bash
 # Clone repository
-git clone <repository-url>
-cd cryptoproject-final
+git clone https://github.com/mel-hsw/cryptoproject-final
+cd cryptoproject-final-main
 
 # Start all services (builds images if needed)
 docker compose -f docker/compose.yaml up -d
@@ -217,8 +217,8 @@ curl http://localhost:8000/health
 
 ```powershell
 # Clone repository
-git clone <repository-url>
-cd cryptoproject-final
+git clone https://github.com/mel-hsw/cryptoproject-final
+cd cryptoproject-final-main
 
 # Start all services (builds images if needed)
 docker compose -f docker/compose.yaml up -d
