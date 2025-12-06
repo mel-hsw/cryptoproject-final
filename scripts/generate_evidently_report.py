@@ -6,7 +6,7 @@ Supports production monitoring report types:
    - Data drift: Feature distribution changes
    - Prediction drift: Model prediction distribution changes
    - Data quality: Missing values, data quality issues
-   
+
 2. data_drift: Compares early vs late windows of collected production data
 3. train_test: Compares train vs test datasets (for historical analysis)
 
@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 # PredictionDriftMetric may not be available in all Evidently versions
 try:
     from evidently.metrics import PredictionDriftMetric
+
     HAS_PREDICTION_DRIFT = True
 except ImportError:
     HAS_PREDICTION_DRIFT = False
@@ -150,13 +151,13 @@ def select_features_for_drift(df: pd.DataFrame) -> list:
     # Import MODEL_FEATURES from feature_preparation.py (single source of truth)
     import sys
     from pathlib import Path
-    
+
     models_dir = Path(__file__).parent.parent / "models"
     if str(models_dir) not in sys.path:
         sys.path.insert(0, str(models_dir))
-    
+
     from feature_preparation import MODEL_FEATURES  # noqa: E402
-    
+
     priority_features = MODEL_FEATURES
 
     # Select available features
@@ -183,33 +184,35 @@ def select_features_for_drift(df: pd.DataFrame) -> list:
     return available_cols
 
 
-def load_live_features(features_path: str, time_window_hours: Optional[int] = None) -> pd.DataFrame:
+def load_live_features(
+    features_path: str, time_window_hours: Optional[int] = None
+) -> pd.DataFrame:
     """
     Load live production features from featurizer output.
-    
+
     Args:
         features_path: Path to features_live.parquet file
         time_window_hours: Optional - only load data from last N hours (default: all data)
-        
+
     Returns:
         DataFrame with live production features
     """
     logger.info(f"Loading live production features from {features_path}")
     df = pd.read_parquet(features_path)
-    
+
     if "timestamp" in df.columns:
         df["timestamp"] = pd.to_datetime(df["timestamp"])
         df = df.sort_values("timestamp").reset_index(drop=True)
-        
+
         if time_window_hours:
             cutoff_time = datetime.now() - timedelta(hours=time_window_hours)
             df = df[df["timestamp"] >= cutoff_time].copy()
             logger.info(f"Filtered to last {time_window_hours} hours: {len(df)} rows")
-    
+
     logger.info(f"Loaded {len(df)} rows of live production data")
     if "timestamp" in df.columns:
         logger.info(f"  Time range: {df['timestamp'].min()} to {df['timestamp'].max()}")
-    
+
     return df
 
 
@@ -220,19 +223,19 @@ def load_predictions_from_kafka_topic(
 ) -> Optional[pd.DataFrame]:
     """
     Load predictions from Kafka topic.
-    
+
     Args:
         kafka_bootstrap: Kafka bootstrap servers
         topic: Kafka topic name
         time_window_hours: Optional - only load predictions from last N hours
-        
+
     Returns:
         DataFrame with predictions or None if Kafka unavailable
     """
     try:
         from kafka import KafkaConsumer
         from kafka.errors import KafkaError
-        
+
         logger.info(f"Loading predictions from Kafka topic {topic}...")
         consumer = KafkaConsumer(
             topic,
@@ -241,7 +244,7 @@ def load_predictions_from_kafka_topic(
             auto_offset_reset="earliest",
             consumer_timeout_ms=5000,  # 5 second timeout
         )
-        
+
         predictions = []
         for message in consumer:
             pred = message.value
@@ -251,17 +254,17 @@ def load_predictions_from_kafka_topic(
                 if pred_time < cutoff_time:
                     continue
             predictions.append(pred)
-        
+
         consumer.close()
-        
+
         if not predictions:
             logger.warning("No predictions found in Kafka topic")
             return None
-        
+
         df = pd.DataFrame(predictions)
         logger.info(f"Loaded {len(df)} predictions from Kafka")
         return df
-        
+
     except Exception as e:
         logger.warning(f"Could not load predictions from Kafka: {e}")
         return None
@@ -273,11 +276,11 @@ def load_predictions_from_files(
 ) -> Optional[pd.DataFrame]:
     """
     Load predictions from NDJSON log files.
-    
+
     Args:
         predictions_dir: Directory containing prediction log files
         time_window_hours: Optional - only load predictions from last N hours
-        
+
     Returns:
         DataFrame with predictions or None if no files found
     """
@@ -285,10 +288,10 @@ def load_predictions_from_files(
     if not predictions_path.exists():
         logger.warning(f"Predictions directory not found: {predictions_dir}")
         return None
-    
+
     logger.info(f"Loading predictions from {predictions_dir}...")
     predictions = []
-    
+
     # Find all NDJSON files
     for log_file in predictions_path.glob("predictions_*.ndjson"):
         try:
@@ -301,7 +304,9 @@ def load_predictions_from_files(
                         pred = json.loads(line)
                         if time_window_hours:
                             pred_time = pd.to_datetime(pred.get("timestamp"))
-                            cutoff_time = datetime.now() - timedelta(hours=time_window_hours)
+                            cutoff_time = datetime.now() - timedelta(
+                                hours=time_window_hours
+                            )
                             if pred_time < cutoff_time:
                                 continue
                         predictions.append(pred)
@@ -310,11 +315,11 @@ def load_predictions_from_files(
         except Exception as e:
             logger.warning(f"Error reading {log_file}: {e}")
             continue
-    
+
     if not predictions:
         logger.warning("No predictions found in log files")
         return None
-    
+
     df = pd.DataFrame(predictions)
     logger.info(f"Loaded {len(df)} predictions from log files")
     return df
@@ -326,25 +331,28 @@ def merge_features_with_predictions(
 ) -> pd.DataFrame:
     """
     Merge features with predictions on timestamp.
-    
+
     Args:
         features_df: DataFrame with features (must have timestamp)
         predictions_df: DataFrame with predictions (must have timestamp)
-        
+
     Returns:
         Merged DataFrame with features and predictions
     """
-    if "timestamp" not in features_df.columns or "timestamp" not in predictions_df.columns:
+    if (
+        "timestamp" not in features_df.columns
+        or "timestamp" not in predictions_df.columns
+    ):
         logger.warning("Cannot merge: missing timestamp columns")
         return features_df
-    
+
     features_df = features_df.copy()
     predictions_df = predictions_df.copy()
-    
+
     # Convert timestamps
     features_df["timestamp"] = pd.to_datetime(features_df["timestamp"])
     predictions_df["timestamp"] = pd.to_datetime(predictions_df["timestamp"])
-    
+
     # Merge on timestamp (within 1 second tolerance)
     merged = pd.merge_asof(
         features_df.sort_values("timestamp"),
@@ -353,8 +361,10 @@ def merge_features_with_predictions(
         direction="nearest",
         tolerance=pd.Timedelta(seconds=1),
     )
-    
-    logger.info(f"Merged {len(merged)} rows (features: {len(features_df)}, predictions: {len(predictions_df)})")
+
+    logger.info(
+        f"Merged {len(merged)} rows (features: {len(features_df)}, predictions: {len(predictions_df)})"
+    )
     return merged
 
 
@@ -428,7 +438,7 @@ def generate_report(
     # Create report with data quality and drift analysis
     # ColumnDriftMetric requires one metric per column, so create metrics for each feature
     drift_metrics = [ColumnDriftMetric(column_name=col) for col in common_cols]
-    
+
     # Base metrics for all reports
     metrics = [
         DatasetSummaryMetric(),
@@ -436,30 +446,54 @@ def generate_report(
         DatasetDriftMetric(),
         *drift_metrics,  # Unpack list of ColumnDriftMetric metrics
     ]
-    
+
     # Add prediction drift if predictions are available
-    if include_prediction_drift and reference_predictions is not None and current_predictions is not None:
+    if (
+        include_prediction_drift
+        and reference_predictions is not None
+        and current_predictions is not None
+    ):
         if HAS_PREDICTION_DRIFT:
             logger.info("Adding prediction drift metrics...")
             metrics.append(PredictionDriftMetric())
         else:
-            logger.warning("PredictionDriftMetric not available, skipping prediction drift")
-    
+            logger.warning(
+                "PredictionDriftMetric not available, skipping prediction drift"
+            )
+
     # Prepare data for prediction drift (if available)
     reference_for_report = reference_filtered.copy()
     current_for_report = current_filtered.copy()
-    
-    if include_prediction_drift and reference_predictions is not None and current_predictions is not None:
+
+    if (
+        include_prediction_drift
+        and reference_predictions is not None
+        and current_predictions is not None
+    ):
         # Merge predictions with features
-        if "timestamp" in reference_df.columns and "timestamp" in reference_predictions.columns:
-            reference_merged = merge_features_with_predictions(reference_df, reference_predictions)
+        if (
+            "timestamp" in reference_df.columns
+            and "timestamp" in reference_predictions.columns
+        ):
+            reference_merged = merge_features_with_predictions(
+                reference_df, reference_predictions
+            )
             if "prediction" in reference_merged.columns:
-                reference_for_report["prediction"] = reference_merged["prediction"].values[:len(reference_for_report)]
-        
-        if "timestamp" in current_df.columns and "timestamp" in current_predictions.columns:
-            current_merged = merge_features_with_predictions(current_df, current_predictions)
+                reference_for_report["prediction"] = reference_merged[
+                    "prediction"
+                ].values[: len(reference_for_report)]
+
+        if (
+            "timestamp" in current_df.columns
+            and "timestamp" in current_predictions.columns
+        ):
+            current_merged = merge_features_with_predictions(
+                current_df, current_predictions
+            )
             if "prediction" in current_merged.columns:
-                current_for_report["prediction"] = current_merged["prediction"].values[:len(current_for_report)]
+                current_for_report["prediction"] = current_merged["prediction"].values[
+                    : len(current_for_report)
+                ]
 
     report = Report(metrics=metrics)
 
@@ -505,22 +539,22 @@ Examples:
     --report_type data_drift \\
     --features data/processed/features_live.parquet \\
     --time_window 48
-        """
+        """,
     )
     parser.add_argument(
         "--report_type",
         choices=["production_monitoring", "data_drift", "train_test"],
         default="production_monitoring",
         help="Type of report: production_monitoring (reference vs live), "
-             "data_drift (early/late), or train_test (train/test)",
+        "data_drift (early/late), or train_test (train/test)",
     )
-    
+
     # Reference data (for production_monitoring)
     parser.add_argument(
         "--reference",
         help="Path to reference (training) features parquet file",
     )
-    
+
     # Current/live data
     parser.add_argument(
         "--current",
@@ -530,7 +564,7 @@ Examples:
         "--features",
         help="Path to features parquet file (for data_drift or train_test)",
     )
-    
+
     # Predictions
     parser.add_argument(
         "--predictions",
@@ -546,14 +580,14 @@ Examples:
         default="predictions.log",
         help="Kafka topic for predictions (default: predictions.log)",
     )
-    
+
     # Time window
     parser.add_argument(
         "--time_window",
         type=int,
         help="Only analyze data from last N hours (optional)",
     )
-    
+
     parser.add_argument(
         "--output",
         default="reports/evidently/production_monitoring_report.html",
@@ -582,26 +616,26 @@ Examples:
         if not args.current:
             logger.error("--current required for production_monitoring report")
             return 1
-        
+
         logger.info("=" * 70)
         logger.info("PRODUCTION MONITORING REPORT")
         logger.info("Comparing reference (training) data vs live production data")
         logger.info("=" * 70)
-        
+
         # Load reference data
         logger.info("Loading reference (training) data...")
         reference = pd.read_parquet(args.reference)
         if "timestamp" in reference.columns:
             reference["timestamp"] = pd.to_datetime(reference["timestamp"])
-        
+
         # Load current production data
         logger.info("Loading current (live production) data...")
         current = load_live_features(args.current, args.time_window)
-        
+
         # Load predictions if available
         reference_predictions = None
         current_predictions = None
-        
+
         if args.predictions:
             logger.info("Loading predictions...")
             if args.predictions.lower() == "kafka":
@@ -612,7 +646,7 @@ Examples:
                 current_predictions = load_predictions_from_files(
                     args.predictions, args.time_window
                 )
-        
+
         # Generate report
         generate_report(
             reference,
@@ -622,21 +656,21 @@ Examples:
             current_predictions=current_predictions,
             include_prediction_drift=not args.no_prediction_drift,
         )
-        
+
     elif args.report_type == "train_test":
         if not args.features:
             logger.error("--features required for train_test report")
             return 1
-        
+
         logger.info("Generating train/test drift report...")
         reference, current = load_train_test_split(args.features)
         generate_report(reference, current, args.output, include_prediction_drift=False)
-        
+
     else:  # data_drift
         if not args.features:
             logger.error("--features required for data_drift report")
             return 1
-        
+
         logger.info("Generating early/late data drift report...")
         reference, current = load_and_split_data(args.features, args.split_ratio)
         generate_report(reference, current, args.output, include_prediction_drift=False)
@@ -645,7 +679,7 @@ Examples:
     logger.info("Done! Open the HTML report in your browser to view results.")
     logger.info(f"Report: {args.output}")
     logger.info("=" * 70)
-    
+
     return 0
 
 

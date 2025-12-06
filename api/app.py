@@ -561,7 +561,9 @@ async def predict(request: Request, predict_request: PredictRequest):
         last_prediction_timestamp.set(time.time())
 
         # Use model's threshold instead of hardcoded 0.5
-        model_threshold = predictor.threshold if hasattr(predictor, 'threshold') else 0.05
+        model_threshold = (
+            predictor.threshold if hasattr(predictor, "threshold") else 0.05
+        )
 
         for score in all_scores:
             prediction_label = "1" if score >= model_threshold else "0"
@@ -759,10 +761,10 @@ async def metrics():
 async def get_live_performance():
     """
     Get live precision/recall metrics from recent predictions.
-    
+
     Calculates PR-AUC, precision, recall, and F1-score on recent predictions
     (last hour by default) matched with labeled features.
-    
+
     Returns:
         JSON with live performance metrics including PR-AUC, precision, recall, F1-score,
         confusion matrix, and sample counts.
@@ -771,35 +773,36 @@ async def get_live_performance():
         # Import monitoring functions (lazy import to avoid circular dependencies)
         import sys
         from pathlib import Path
-        
+
         project_root = Path(__file__).parent.parent
         if str(project_root) not in sys.path:
             sys.path.insert(0, str(project_root))
-        
+
         from scripts.monitor_pr_auc import (
             load_predictions_from_kafka,
             load_features_with_labels,
             match_predictions_with_labels,
             calculate_metrics,
         )
-        
+
         # Load recent data (last hour, 5 minute lookback buffer)
         time_window_hours = 1
         lookback_buffer_minutes = 5
-        
+
         predictions_df = load_predictions_from_kafka(
             time_window_hours=time_window_hours,
-            lookback_buffer_minutes=lookback_buffer_minutes
+            lookback_buffer_minutes=lookback_buffer_minutes,
         )
-        
+
         if predictions_df is None or len(predictions_df) == 0:
             # Try file-based fallback
             from scripts.monitor_pr_auc import load_predictions_from_files
+
             predictions_df = load_predictions_from_files(
                 time_window_hours=time_window_hours,
-                lookback_buffer_minutes=lookback_buffer_minutes
+                lookback_buffer_minutes=lookback_buffer_minutes,
             )
-        
+
         if predictions_df is None or len(predictions_df) == 0:
             return {
                 "status": "no_data",
@@ -807,20 +810,18 @@ async def get_live_performance():
                 "time_window_hours": time_window_hours,
                 "lookback_buffer_minutes": lookback_buffer_minutes,
             }
-        
+
         features_df = load_features_with_labels()
         if features_df is None or len(features_df) == 0:
             return {
                 "status": "no_features",
                 "message": "No features with labels available",
             }
-        
+
         matched_df = match_predictions_with_labels(
-            predictions_df, 
-            features_df,
-            time_tolerance_seconds=30
+            predictions_df, features_df, time_tolerance_seconds=30
         )
-        
+
         if matched_df is None or len(matched_df) == 0:
             return {
                 "status": "no_matches",
@@ -828,22 +829,23 @@ async def get_live_performance():
                 "predictions_count": len(predictions_df),
                 "features_count": len(features_df),
             }
-        
+
         # Extract arrays for metrics calculation
         y_true = matched_df["volatility_spike"].values.astype(int)
         y_pred = matched_df["prediction"].values.astype(int)
         y_proba = matched_df["score"].values.astype(float)
-        
+
         # Calculate metrics
         metrics = calculate_metrics(y_true, y_pred, y_proba)
-        
+
         # Get model version from predictions
         model_version = (
-            matched_df["model_version"].mode()[0] 
-            if "model_version" in matched_df.columns and len(matched_df["model_version"].mode()) > 0
+            matched_df["model_version"].mode()[0]
+            if "model_version" in matched_df.columns
+            and len(matched_df["model_version"].mode()) > 0
             else "production"
         )
-        
+
         return {
             "status": "success",
             "metrics": {
@@ -859,7 +861,11 @@ async def get_live_performance():
             "sample_count": metrics["total_samples"],
             "positive_samples": metrics["positive_samples"],
             "negative_samples": metrics["negative_samples"],
-            "spike_rate": metrics["positive_samples"] / metrics["total_samples"] if metrics["total_samples"] > 0 else 0.0,
+            "spike_rate": (
+                metrics["positive_samples"] / metrics["total_samples"]
+                if metrics["total_samples"] > 0
+                else 0.0
+            ),
             "model_version": model_version,
             "time_window_hours": time_window_hours,
             "lookback_buffer_minutes": lookback_buffer_minutes,
@@ -868,8 +874,7 @@ async def get_live_performance():
     except Exception as e:
         logger.error(f"Error calculating live performance metrics: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, 
-            detail=f"Error calculating metrics: {str(e)}"
+            status_code=500, detail=f"Error calculating metrics: {str(e)}"
         )
 
 

@@ -230,7 +230,7 @@ class CoinbaseIngestor:
                 # Fallback to current UTC time if Coinbase doesn't provide timestamp
                 # Use timezone-aware timestamp to prevent "Cannot mix tz-aware with tz-naive" errors
                 enriched_timestamp = datetime.now(tz=timezone.utc).isoformat()
-            
+
             enriched = {
                 "timestamp": enriched_timestamp,
                 "product_id": ticker_data.get("product_id"),

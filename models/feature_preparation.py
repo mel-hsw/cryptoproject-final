@@ -35,70 +35,72 @@ BASELINE_FEATURES = MODEL_FEATURES
 def select_features(df: pd.DataFrame, feature_list: List[str] = None) -> pd.DataFrame:
     """
     Select and prepare features from a dataframe.
-    
+
     Args:
         df: DataFrame with feature columns
         feature_list: List of feature names to select. If None, uses MODEL_FEATURES.
-        
+
     Returns:
         DataFrame with selected features (NaN filled with 0)
     """
     if feature_list is None:
         feature_list = MODEL_FEATURES
-    
+
     # Select available features
     available_features = [feat for feat in feature_list if feat in df.columns]
-    
+
     if not available_features:
         raise ValueError(
             f"No matching feature columns found in dataframe. "
             f"Expected: {feature_list}. "
             f"Available: {df.columns.tolist()}"
         )
-    
+
     if len(available_features) < len(feature_list):
         missing = set(feature_list) - set(available_features)
         print(f"⚠ Warning: Some expected features missing: {missing}")
-        print(f"⚠ Warning: Using {len(available_features)} available features: {available_features}")
-    
+        print(
+            f"⚠ Warning: Using {len(available_features)} available features: {available_features}"
+        )
+
     # Select features and fill NaN values with 0
     X = df[available_features].copy()
     X = X.fillna(0)
-    
+
     return X
 
 
 def prepare_features_for_training(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series]:
     """
     Prepare features for training (includes target variable).
-    
+
     Uses top 10 features based on Random Forest feature importance analysis:
     - Selected from feature_analysis.py results
     - PR-AUC: 0.9006 ± 0.0095 (cross-validated)
     - Focuses on most predictive features across different time windows
-    
+
     Args:
         df: Features dataframe with 'volatility_spike' column
-        
+
     Returns:
         Tuple of (X, y) where X has MODEL_FEATURES and y is volatility_spike
     """
     if "volatility_spike" not in df.columns:
         raise ValueError("DataFrame must have 'volatility_spike' column for training")
-    
+
     X = select_features(df, MODEL_FEATURES)
     y = df["volatility_spike"].copy()
-    
+
     return X, y
 
 
 def prepare_features_for_inference(df: pd.DataFrame) -> pd.DataFrame:
     """
     Prepare features for inference (no target variable needed).
-    
+
     The featurizer outputs exactly MODEL_FEATURES, so this function
     validates that all required features are present and returns them.
-    
+
     Args:
         df: DataFrame with feature columns (should contain MODEL_FEATURES)
 
@@ -111,10 +113,10 @@ def prepare_features_for_inference(df: pd.DataFrame) -> pd.DataFrame:
 def prepare_baseline_features(df: pd.DataFrame) -> pd.DataFrame:
     """
     Prepare features for baseline model.
-    
+
     Args:
         df: DataFrame with feature columns
-        
+
     Returns:
         DataFrame with BASELINE_FEATURES selected and prepared
     """
@@ -244,4 +246,3 @@ class VolatilityPredictor:
                 else 0
             ),
         }
-
