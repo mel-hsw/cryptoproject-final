@@ -6,7 +6,6 @@ the API is functioning correctly in the CI/CD pipeline.
 """
 
 import os
-import sys
 import time
 import requests
 import pytest
