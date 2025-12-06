@@ -267,6 +267,11 @@ class PredictionConsumer:
         api_features["product_id"] = feature_dict.get("product_id", "")
         api_features["price"] = feature_dict.get("price")
 
+        # Assignment contract requires these three fields; map from existing features
+        api_features["ret_mean"] = api_features.get("log_return_300s", 0.0)
+        api_features["ret_std"] = api_features.get("realized_volatility_300s", 0.0)
+        api_features["n"] = int(api_features.get("trade_intensity_300s", 0) or 0)
+
         return api_features
 
     def _log_prediction(
