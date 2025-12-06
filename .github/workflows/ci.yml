@@ -38,7 +38,13 @@ jobs:
     
     - name: Start Docker services
       run: |
-        docker compose -f docker/compose.yaml up -d zookeeper kafka mlflow api
+        docker compose -f docker/compose.yaml up -d kafka kafka-init mlflow api
+    
+    - name: Wait for Kafka topics to be initialized
+      run: |
+        echo "Waiting for kafka-init to complete..."
+        timeout 60 bash -c 'until docker compose -f docker/compose.yaml ps kafka-init | grep -q "Exited (0)"; do sleep 2; done' || true
+        echo "Kafka topics initialized!"
     
     - name: Wait for API to be healthy
       run: |
