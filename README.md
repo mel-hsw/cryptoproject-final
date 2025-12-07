@@ -4,7 +4,7 @@ Real-time cryptocurrency volatility detection service that streams Coinbase data
 
 Group 9
 Name: Asli Gulcur, Melissa Wong
-[Demo Video](https://youtu.be/NntOuGAfYRI)
+[Demo Video](https://youtu.be/AZkts6N6DJ4)
 
 ---
 
