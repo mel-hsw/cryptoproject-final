@@ -1,6 +1,6 @@
 # Real-Time Crypto AI Service
 
-Real-time cryptocurrency volatility detection service that streams Coinbase data,  computes features in real-time, makes ML predictions, and provides comprehensive monitoring—all with production-grade resilience and safety mechanisms.
+Real-time cryptocurrency volatility detection service that streams Coinbase data, computes features in real-time, makes ML predictions, and provides comprehensive monitoring—all with production-grade resilience and safety mechanisms.
 
 **Name**: Asli Gulcur, Melissa Wong (Group 9)
 
@@ -8,27 +8,29 @@ Real-time cryptocurrency volatility detection service that streams Coinbase data
 
 ---
 
-# Quickstart
+# Quick Start
 
-## macOS/Linux 
+## Installation
+
+### macOS/Linux 
 ```bash
 git clone https://github.com/mel-hsw/cryptoproject-final && cd cryptoproject-final
 docker compose -f docker/compose.yaml up -d
 ```
 
-## Windows (PowerShell)
+### Windows (PowerShell)
 ```powershell
 git clone https://github.com/mel-hsw/cryptoproject-final; cd cryptoproject-final
 docker compose -f docker/compose.yaml up -d
 ```
 
-API Metrics (Prometheus): http://localhost:8000/metrics
-Monitoring Dashboards (Grafana): http://localhost:3000/d/crypto-volatility-api/crypto-volatility-detection-api 
-Model Tracking (MLflow): http://localhost:5001
+## Access Points
 
----
+- API Metrics (Prometheus): http://localhost:8000/metrics
+- Monitoring Dashboards (Grafana): http://localhost:3000/d/crypto-volatility-api/crypto-volatility-detection-api 
+- Model Tracking (MLflow): http://localhost:5001
 
-# Prerequisites
+## Prerequisites
 
 - **Docker Desktop** (v20.10+)
 - **Python 3.9.25** (specified in `.python-version`)
@@ -38,7 +40,7 @@ Model Tracking (MLflow): http://localhost:5001
 
 ---
 
-# Configuration Management
+# Configuration
 
 ## Environment Variables
 
@@ -47,7 +49,7 @@ The system uses optional environment variables for configuration across all serv
 - **Reduces secret leakage risk** by keeping sensitive values out of version control
 - **Simplifies deployment** by providing environment-specific configurations
 
-### Quick Setup
+### Setup Steps
 
 1. **Copy the template:**
    ```bash
@@ -65,7 +67,7 @@ The system uses optional environment variables for configuration across all serv
    docker compose -f docker/compose.yaml up -d
    ```
 
-### Key Configuration Variables
+### Key Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -77,7 +79,7 @@ The system uses optional environment variables for configuration across all serv
 
 See [.env.example](.env.example) for the complete list of configuration options.
 
-### Security Notes
+### Security
 
 - ✅ `.env` is in `.gitignore` - never committed to version control
 - ✅ `.env.example` provides a safe template without secrets
@@ -85,6 +87,8 @@ See [.env.example](.env.example) for the complete list of configuration options.
 - ⚠️ For production deployments, use secret management services (AWS Secrets Manager, HashiCorp Vault, etc.)
 
 ---
+
+# Project Structure
 
 **Key Directories:**
 
@@ -98,7 +102,7 @@ See [.env.example](.env.example) for the complete list of configuration options.
 
 ---
 
-# Architecture Overview
+# Architecture
 
 ## System Flow
 
@@ -110,7 +114,7 @@ Prediction Consumer → FastAPI /predict → Prometheus → Grafana
                         PR-AUC Monitor → MLflow (production metrics)
 ```
 
-## Components
+## Core Components
 
 ### Data Ingestion
 - **Ingest Container** (`scripts/ws_ingest.py`)
@@ -196,7 +200,8 @@ prometheus (health check) → grafana (depends on)
 ```
 
 ---
-# Setup (Detailed)
+
+# Detailed Setup
 
 ## macOS/Linux
 
@@ -244,7 +249,7 @@ Invoke-RestMethod -Uri "http://localhost:8000/health"
 
 ---
 
-# Testing the API
+# Usage
 
 ## Health Check
 
@@ -285,9 +290,7 @@ Invoke-RestMethod -Uri "http://localhost:8000/predict" `
 }
 ```
 
----
-
-# Monitoring
+## Monitoring Dashboards
 
 - **Grafana:** http://localhost:3000 (admin/admin123) - Real-time dashboards (latency p50/p95, error rate, freshness)
 - **Prometheus:** http://localhost:9090 - Metrics queries
@@ -295,7 +298,9 @@ Invoke-RestMethod -Uri "http://localhost:8000/predict" `
 
 ---
 
-# Stopping
+# Operations
+
+## Stopping Services
 
 **macOS/Linux:**
 ```bash
@@ -312,9 +317,7 @@ docker compose -f docker/compose.yaml down
 docker compose -f docker/compose.yaml down -v
 ```
 
----
-
-# Model Rollback
+## Model Rollback
 
 **macOS/Linux:**
 ```bash
@@ -353,27 +356,30 @@ Pre-trained Models (filesystem) → API loads models → Production predictions 
 
 **Note:** Training scripts have been deliberately removed for this project submission. Models were trained offline and committed to the repository as artifacts.
 
-### 1. Model Storage
-- Pre-trained models are stored in `models/artifacts/{model_name}/model.pkl`
-- Models are versioned by directory structure:
-  ```
-  models/artifacts/
-  ├── baseline/
-  │   └── model.pkl                      # Z-score baseline model
-  └── random_forest/
-      ├── model.pkl                       # Random Forest model
-      ├── threshold_metadata.json         # Optimized threshold (0.034)
-      └── evaluation_metrics.json         # Training metrics
-  ```
+## Model Storage
 
-### 2. Production Serving
+Pre-trained models are stored in `models/artifacts/{model_name}/model.pkl`:
+
+```
+models/artifacts/
+├── baseline/
+│   └── model.pkl                      # Z-score baseline model
+└── random_forest/
+    ├── model.pkl                       # Random Forest model
+    ├── threshold_metadata.json         # Optimized threshold (0.034)
+    └── evaluation_metrics.json         # Training metrics
+```
+
+## Production Serving
+
 - **API loads models from filesystem** at startup
 - Model selection via environment variables:
   - `MODEL_VARIANT`: `ml` (trained model) or `baseline` (z-score fallback)
   - `MODEL_VERSION`: `random_forest`, `logistic_regression`, etc.
 - Models are loaded once at startup for performance
 
-### 3. Production Monitoring with MLflow
+## Production Monitoring
+
 - **MLflow is used exclusively for monitoring production predictions** (not for training)
 - **PR-AUC Monitor** (`scripts/monitor_pr_auc.py`) continuously logs production metrics:
   - PR-AUC, precision, recall, F1 score
@@ -381,7 +387,7 @@ Pre-trained Models (filesystem) → API loads models → Production predictions 
   - Time-series visualization at http://localhost:5001
 - Metrics are logged every 10 minutes for ongoing performance tracking
 
-## Why This Architecture?
+## Architecture Rationale
 
 **Separation of Concerns:**
 - **Filesystem** = Model storage and versioning (pre-trained models)
