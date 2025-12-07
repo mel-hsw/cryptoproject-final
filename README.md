@@ -1,10 +1,10 @@
 # Real-Time Crypto AI Service
 
-Real-time cryptocurrency volatility detection service that streams Coinbase data, computes features in real-time, makes ML predictions, and provides comprehensive monitoring—all with production-grade resilience and safety mechanisms.
+Real-time cryptocurrency volatility detection service that streams Coinbase data,  computes features in real-time, makes ML predictions, and provides comprehensive monitoring—all with production-grade resilience and safety mechanisms.
 
+**Name**: Asli Gulcur, Melissa Wong (Group 9)
 
-**Name:** Asli Gulcur, Melissa Wong (Group 9)
-**[Demo Video](https://youtu.be/NntOuGAfYRI)**
+**[Demo Video](https://youtu.be/AZkts6N6DJ4)**
 
 ---
 
@@ -42,7 +42,7 @@ Model Tracking (MLflow): http://localhost:5001
 
 ## Environment Variables
 
-The system uses environment variables for configuration across all services. This approach:
+The system uses optional environment variables for configuration across all services. This approach:
 - **Prevents configuration mistakes** by providing a centralized template
 - **Reduces secret leakage risk** by keeping sensitive values out of version control
 - **Simplifies deployment** by providing environment-specific configurations
@@ -86,7 +86,7 @@ See [.env.example](.env.example) for the complete list of configuration options.
 
 ---
 
-## Key Directories
+**Key Directories:**
 
 - **`api/`** - FastAPI service exposing `/predict`, `/health`, `/version`, `/metrics` endpoints
 - **`scripts/`** - Pipeline orchestration, data ingestion, and feature engineering
