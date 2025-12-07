@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Continuous PR-AUC monitoring for production model performance.
-Runs every 10 minutes, calculates PR-AUC on recent predictions vs labels,
+Runs every minute, calculates PR-AUC on recent predictions vs labels,
 and logs metrics to MLflow for visualization.
 
 This service:
@@ -48,8 +48,8 @@ FEATURES_LIVE_PATH = Path(
     os.getenv("FEATURES_LIVE_PATH", "data/processed/features_live.parquet")
 )
 UPDATE_INTERVAL_SECONDS = int(
-    os.getenv("PR_AUC_UPDATE_INTERVAL", "600")
-)  # 10 minutes default
+    os.getenv("PR_AUC_UPDATE_INTERVAL", "60")
+)  # 1 minute default
 TIME_WINDOW_HOURS = float(
     os.getenv("PR_AUC_TIME_WINDOW", "1")
 )  # Last N hours default (supports fractional hours like 0.5)
