@@ -1,10 +1,10 @@
 # Real-Time Crypto AI Service
 
-Real-time cryptocurrency volatility detection service that streams Coinbase data, computes features, and makes ML predictions via FastAPI.
+Real-time cryptocurrency volatility detection service that streams Coinbase data, computes features in real-time, makes ML predictions, and provides comprehensive monitoring—all with production-grade resilience and safety mechanisms.
 
-Group 9
-Name: Asli Gulcur, Melissa Wong
-[Demo Video](https://youtu.be/AZkts6N6DJ4)
+
+**Name:** Asli Gulcur, Melissa Wong (Group 9)
+**[Demo Video](https://youtu.be/NntOuGAfYRI)**
 
 ---
 
@@ -86,7 +86,7 @@ See [.env.example](.env.example) for the complete list of configuration options.
 
 ---
 
-**Key Directories:**
+## Key Directories
 
 - **`api/`** - FastAPI service exposing `/predict`, `/health`, `/version`, `/metrics` endpoints
 - **`scripts/`** - Pipeline orchestration, data ingestion, and feature engineering
