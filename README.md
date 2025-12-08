@@ -157,7 +157,7 @@ Prediction Consumer → FastAPI /predict → Prometheus → Grafana
 - **PR-AUC Monitor** (`scripts/monitor_pr_auc.py`)
   - Continuously monitors model performance on live predictions
   - Compares predictions with labels from featurizer
-  - Logs metrics to MLflow every 10 minutes for time-series visualization
+  - Logs metrics to MLflow every minute for time-series visualization
   - Access charts at http://localhost:5001
 
 ### Observability
@@ -385,7 +385,7 @@ models/artifacts/
   - PR-AUC, precision, recall, F1 score
   - True positives, false positives, true negatives, false negatives
   - Time-series visualization at http://localhost:5001
-- Metrics are logged every 10 minutes for ongoing performance tracking
+- Metrics are logged every minute for ongoing performance tracking
 
 ## Architecture Rationale
 
@@ -451,6 +451,26 @@ curl http://localhost:8000/version
 - **Windows:** `netstat -ano | findstr :8000`
 
 See [docs/w6_runbook.md](docs/w6_runbook.md) for detailed troubleshooting and operations guide.
+
+---
+
+# Scripts & Deliverables Mapping
+
+Every script in this repository directly fulfills a specific project deliverable.
+
+## Script Inventory & Justification
+
+| Script | Purpose | Deliverable | Status |
+|--------|---------|-------------|--------|
+| **[ws_ingest.py](scripts/ws_ingest.py)** | Stream live Coinbase data to Kafka | Week 4: Data ingestion pipeline | Required (Docker service) |
+| **[featurizer.py](scripts/featurizer.py)** | Compute windowed features in real-time | Week 4: Feature engineering pipeline | Required (Docker service) |
+| **[prediction_consumer.py](scripts/prediction_consumer.py)** | Automated prediction requests to API | Week 4: End-to-end pipeline validation | Required (Docker service) |
+| **[monitor_pr_auc.py](scripts/monitor_pr_auc.py)** | Track production model performance | Week 6: Production monitoring with MLflow | Required (Docker service) |
+| **[test_api_integration.py](scripts/test_api_integration.py)** | Integration tests for API endpoints | Week 5: CI pipeline testing | Required (CI/CD) |
+| **[load_test.py](scripts/load_test.py)** | Performance benchmarking (100 burst requests) | Week 5: Load testing + latency report | Required (testing) |
+| **[generate_evidently_report.py](scripts/generate_evidently_report.py)** | Data drift detection with Evidently | Week 6: Drift detection and reporting | Required (monitoring) |
+| **[e2e_validation.py](scripts/e2e_validation.py)** | Full system validation (ingestion → prediction) | Week 7: Demo validation | Required (validation) |
+| **[replay_data.py](scripts/replay_data.py)** | Replay historical data for testing | Week 4: Replay mode testing | Utility (dev/test) |
 
 ---
 
