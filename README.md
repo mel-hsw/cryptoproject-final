@@ -5,6 +5,7 @@ Real-time cryptocurrency volatility detection service that streams Coinbase data
 **Name**: Asli Gulcur, Melissa Wong (Group 9)
 
 **[Demo Video](https://youtu.be/AZkts6N6DJ4)**
+**[Presentation Slides](https://docs.google.com/presentation/d/1-1hQehvd9x7ai28rtsVHZnTkM_W-M-LZXqKeHLz0Bqc/edit?usp=sharing)**
 
 ---
 
